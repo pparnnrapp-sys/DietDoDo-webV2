@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DietDoDo - อ่านบทความ</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;800&family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+  <!-- นำเข้าไลบรารี marked.js สำหรับแปลง Markdown เป็น HTML -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- นำเข้าไลบรารี js-yaml สำหรับอ่านข้อมูล Frontmatter ได้อย่างแม่นยำ 100% -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+  <!-- นำเข้าไลบรารีสำหรับแสดงผล Lottie -->
+  <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.9.10/dist/dotlottie-wc.js" type="module"></script>
+  <style>
+    :root {
+      --bg-color: #dcecc9; 
+      --bg-color-light: #f4f9ec; 
+      --text-dark: #2c3e50;
+      --text-grey: #7f8c8d;
+      --orange: #f27d16;
+      --green: #86c140;
+    }
+    
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    
+    body { 
+      margin: 0; 
+      padding: 0; 
+      background: var(--bg-color-light);
+      background: radial-gradient(circle at 80% 50%, var(--bg-color-light) 0%, var(--bg-color) 100%);
+      background-attachment: fixed;
+      font-family: 'Sarabun', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden; /* ป้องกันแถบเลื่อนแนวนอนเวลารูปภาพขยายเต็มจอ */
+    }
+
+    /* Reading Progress Bar */
+    .progress-container {
+      position: absolute;
+      bottom: 0; /* เปลี่ยนมาเกาะที่ขอบล่างของ Header แทน */
+      left: 0;
+      width: 100%;
+      height: 8px; /* ปรับตัวเลขตรงนี้ให้มากขึ้นเพื่อให้เส้นหนาขึ้น (เช่น 6px หรือ 8px) */
+      background: transparent;
+      z-index: 1002; /* ให้อยู่เหนือ Header */
+    }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), var(--orange));
+      width: 0%;
+      opacity: 0; /* เริ่มต้นให้ซ่อนไว้ก่อน */
+      transition: width 0.1s ease-out, opacity 0.3s ease; /* เพิ่มแอนิเมชันตอนแสดง/ซ่อน */
+      position: relative; /* เพิ่มเพื่อให้ตัวการ์ตูนเกาะปลายเส้นได้ */
+    }
+
+    /* สไตล์สำหรับตัวการ์ตูน Lottie ที่วิ่งปลายเส้นสถานะการอ่าน */
+    .progress-icon {
+      position: absolute;
+      right: -30px; /* ปรับชดเชยกับขนาดที่ใหญ่ขึ้น */
+      top: -26px; /* ขยับขึ้นให้กึ่งกลางรูปตรงกับเส้น */
+      width: 80px; /* ปรับขนาดตัวการ์ตูนให้ใหญ่ขึ้น */
+      height: 60px;
+      z-index: 1003;
+      transition: transform 0.6s ease; /* เพิ่มแอนิเมชันตอนพลิกตัวให้ดูนุ่มนวล */
+      filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.3)); /* เพิ่มเงาให้ตัวการ์ตูนดูมีมิติและลอยเด่น */
+    }
+
+    /* Header Styles */
+    header { position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 8px 40px; font-family: 'Poppins', sans-serif; background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.6); }
+    .logo-container { width: 180px; max-width: 100%; display: block; transition: transform 0.3s ease, filter 0.3s ease; text-decoration: none; }
+    .logo-container:hover { transform: translateY(-2px) scale(1.02); filter: drop-shadow(0 5px 15px rgba(255, 255, 255, 0.6)) brightness(1.1); }
+    nav.menu-links { display: flex; gap: 40px; }
+    nav.menu-links a { text-decoration: none; color: var(--text-grey); font-weight: 700; font-size: 18px; letter-spacing: 1.5px; transition: 0.3s; border-bottom: 3px solid transparent; padding-bottom: 5px; }
+    nav.menu-links a:hover, nav.menu-links a.active { color: var(--text-dark); transform: translateY(-2px); border-bottom: 3px solid var(--orange); }
+
+    /* Article Content Styles */
+    .article-container {
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 20px 3% 40px;
+    }
+
+    .breadcrumbs {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 15px;
+      font-size: 15px;
+      color: var(--text-grey);
+    }
+    .breadcrumbs a {
+      color: var(--green);
+      text-decoration: none;
+      font-weight: 700;
+      transition: all 0.3s ease;
+    }
+    .breadcrumbs a:hover {
+      color: var(--orange);
+    }
+    .breadcrumbs .separator {
+      color: #ccc;
+      font-size: 16px;
+    }
+    .breadcrumb-title {
+      color: var(--text-dark);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 300px;
+    }
+
+    .article-wrapper {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      padding: 40px 60px 50px;
+      border-radius: 24px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.05);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      animation: slideUpFade 0.8s ease-out forwards;
+    }
+
+    @keyframes slideUpFade {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* H1 Heading 1 (หัวข้อ 1) - ชื่อบทความหลัก */
+    .article-title {
+      font-family: 'Poppins', 'Sarabun', sans-serif;
+      font-size: 40px;
+      font-weight: 800;
+      color: #111;
+      margin: 10px 0 30px 0;
+      line-height: 1.3;
+      text-align: center;
+      text-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+    .article-title::after {
+      content: '';
+      display: block;
+      width: 60px;
+      height: 5px;
+      background: linear-gradient(90deg, var(--orange), #ffb732);
+      margin: 20px auto 0;
+      border-radius: 5px;
+    }
+
+    .category-tag {
+      display: inline-block;
+      padding: 6px 18px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #fff;
+      margin-bottom: 15px;
+    }
+    .category-tag.service { background: rgba(241, 196, 15, 0.9); color: #333; }
+    .category-tag.therapy { background: rgba(134, 193, 64, 0.9); }
+
+    /* Text (ข้อความปกติ) - การตั้งค่าตัวอักษรพื้นฐาน */
+    .article-body {
+      font-size: 17px;
+      color: #111;
+      line-height: 1.85;
+      flex: 1;
+      min-width: 0;
+    }
+    
+    /* Text (ข้อความปกติ) - ย่อหน้า */
+    .article-body p {
+      margin-top: 0;
+      margin-bottom: 20px;
+    }
+
+    /* Link (ลิงก์ทั่วไปในเนื้อหา - ทำให้เหมือนข้อความปกติ) */
+    .article-body a {
+      color: inherit; /* ใช้สีเดียวกับข้อความปกติ */
+      text-decoration: none; /* เอาเส้นใต้ออก */
+      border-bottom: none; /* เอาเส้นใต้ที่เคยทำไว้ออก */
+    }
+
+    /* Link (ลิงก์ในแท็บแหล่งอ้างอิง - ทำให้เป็นสีเขียว) */
+    .tab-pane[data-tab-key="references"] a {
+      color: var(--green);
+      text-decoration: none;
+      border-bottom: 1px solid var(--green);
+      transition: all 0.3s ease;
+    }
+    .tab-pane[data-tab-key="references"] a:hover {
+      color: var(--orange);
+      border-bottom-color: var(--orange);
+    }
+
+    .article-body img {
+      max-width: 50%;
+      display: block;
+      height: auto;
+      border-radius: 20px;
+      margin: 30px auto;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+      transition: transform 0.3s ease;
+    }
+    .article-body img:hover {
+      transform: scale(1.02);
+    }
+    
+    /* Lightbox Styles (ป๊อปอัปขยายรูปภาพ) */
+    .lightbox-modal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background-color: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(5px);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .lightbox-modal.show { display: flex; opacity: 1; align-items: center; justify-content: center; }
+    .lightbox-content {
+      max-width: 90%; max-height: 90%;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      transform: scale(0.8);
+      transition: transform 0.3s ease;
+    }
+    .lightbox-modal.show .lightbox-content { transform: scale(1); }
+    .lightbox-close {
+      position: absolute; top: 20px; right: 30px;
+      color: #fff; font-size: 40px; font-weight: bold;
+      cursor: pointer; transition: color 0.3s;
+      user-select: none;
+    }
+    .lightbox-close:hover { color: var(--orange); }
+
+    /* Table (ตารางในเนื้อหา) */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      margin: 25px 0;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+      background: #fff;
+    }
+    .article-body table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 16px;
+      min-width: 500px; /* บังคับความกว้างขั้นต่ำไม่ให้ตารางบีบจนอ่านไม่ออก */
+    }
+    .article-body table thead tr {
+      background-color: var(--green);
+      color: #ffffff;
+      text-align: left;
+    }
+    .article-body th, .article-body td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #dddddd;
+    }
+    .article-body tbody tr:nth-of-type(even) { background-color: #f9f9f9; }
+    .article-body tbody tr:hover { background-color: #f1f8e9; }
+    .article-body tbody tr:last-of-type { border-bottom: 2px solid var(--green); }
+    
+    /* H2 Heading 2 (หัวข้อ 2) */
+    .article-body h2 {
+      color: var(--green);
+      margin-top: 30px;
+      margin-bottom: 20px;
+      font-weight: 700;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.8) 0%, transparent 100%);
+      border-left: 6px solid var(--green);
+      padding: 12px 20px;
+      border-radius: 4px 12px 12px 4px;
+    }
+
+    /* H3 Heading 3 (หัวข้อ 3) */
+    .article-body h3 {
+      color: var(--orange);
+      margin-top: 25px;
+      margin-bottom: 15px;
+      font-weight: 700;
+      border-bottom: 2px solid var(--orange);
+      display: inline-block;
+      padding-bottom: 5px;
+    }
+
+    /* Bulleted list (รายการแบบสัญลักษณ์แสดงหัวข้อย่อย) */
+    .article-body ul { list-style: none; padding-left: 10px; }
+    .article-body ul li { position: relative; padding-left: 25px; margin-bottom: 10px; }
+    .article-body ul li::before {
+      content: ''; position: absolute; left: 0; top: 12px;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--orange);
+    }
+    /* Nested Bullet (บุลเล็ตซ้อนระดับ 2 และ 3) */
+    .article-body ul ul { padding-left: 20px; margin-top: 10px; margin-bottom: 0; }
+    .article-body ul ul li::before {
+      background: transparent;
+      border: 2px solid var(--orange);
+      width: 6px; height: 6px;
+      top: 11px;
+    }
+    .article-body ul ul ul li::before {
+      background: var(--green);
+      border: none; border-radius: 2px; width: 6px; height: 6px; top: 13px;
+    }
+    
+    /* Numbered list (รายการแบบเลขลำดับ) */
+    .article-body ol { padding-left: 20px; margin-bottom: 20px; }
+    .article-body ol li { margin-bottom: 10px; padding-left: 5px; }
+    .article-body ol li::marker { color: var(--green); font-weight: bold; }
+    /* Nested Numbered List (ลิสต์ตัวเลขซ้อนระดับ 2 และ 3) */
+    .article-body ol ol { list-style-type: lower-alpha; margin-top: 10px; padding-left: 20px; margin-bottom: 0; }
+    .article-body ol ol ol { list-style-type: lower-roman; }
+
+    .article-body blockquote {
+      position: relative;
+      border-left: 5px solid var(--orange);
+      margin: 25px 0;
+      padding: 20px 25px;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(10px);
+      border-radius: 0 16px 16px 0;
+      font-style: italic;
+      color: #d35400;
+      font-size: 1.05em;
+      z-index: 1;
+    }
+    .article-body blockquote::before {
+      content: '“';
+      position: absolute;
+      font-size: 80px;
+      color: rgba(255, 127, 0, 0.1);
+      top: -15px; left: 10px;
+      font-family: serif;
+      z-index: -1;
+    }
+    
+    /* Table of Contents Styles */
+    html { scroll-behavior: smooth; } /* ทำให้เลื่อนหน้าจอแบบนุ่มนวลเวลาคลิกสารบัญ */
+    .toc-container {
+      background: rgba(255, 255, 255, 0.5);
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 20px 25px;
+      margin: 0 0 30px 0;
+    }
+    .toc-container h3 {
+      margin-top: 0;
+      color: var(--green);
+      font-size: 22px;
+      border-bottom: 2px solid #eaf6d0;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+    }
+    .toc-container ul { list-style: none; padding: 0; margin: 0; }
+    .toc-container li { margin-bottom: 12px; }
+    .toc-container li.toc-main { font-weight: bold; }
+    .toc-container li.toc-sub { margin-left: 20px; font-weight: normal; font-size: 0.95em; }
+    .toc-container li.toc-sub::before { content: "- "; color: var(--orange); }
+    .toc-container a {
+      text-decoration: none;
+      color: var(--text-grey);
+      transition: color 0.3s;
+    }
+    .toc-container a:hover { color: var(--orange); }
+
+    /* Tabs Styles */
+    .article-layout {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      margin-top: 20px;
+      transition: gap 0.4s ease;
+    }
+    .article-layout.show-sidebar {
+      gap: 40px;
+    }
+    .tab-sidebar {
+      position: sticky;
+      top: 120px;
+      z-index: 10;
+      align-self: flex-start;
+      width: 45px;
+      transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      flex-shrink: 0;
+    }
+    .article-layout.show-sidebar .tab-sidebar {
+      width: 250px;
+    }
+    .tab-toggle-btn {
+      background: #fff;
+      border: 2px solid var(--green);
+      color: var(--green);
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      font-family: 'Sarabun', sans-serif;
+      font-weight: bold;
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.4s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      flex-shrink: 0;
+      padding: 0;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .article-layout.show-sidebar .tab-toggle-btn {
+      width: 100%;
+      border-radius: 25px;
+      justify-content: flex-start;
+      padding: 0 20px;
+      font-size: 15px;
+    }
+    .tab-toggle-btn:hover {
+      background: var(--green);
+      color: #fff;
+    }
+    .tab-toggle-btn .btn-text {
+      opacity: 0;
+      width: 0;
+      display: inline-block;
+      transition: opacity 0.3s;
+      overflow: hidden;
+    }
+    .article-layout.show-sidebar .tab-toggle-btn .btn-text {
+      opacity: 1;
+      width: auto;
+      margin-left: 8px;
+    }
+    .toggle-icon {
+      display: inline-block;
+      transition: transform 0.4s ease, color 0.3s;
+      font-size: 20px;
+      line-height: 1;
+    }
+    .toggle-icon::before {
+      content: '☰'; /* สัญลักษณ์ตอนหุบสารบัญ */
+    }
+    .article-layout.show-sidebar .tab-toggle-btn .toggle-icon {
+      transform: rotate(90deg);
+    }
+    .article-layout.show-sidebar .tab-toggle-btn .toggle-icon::before {
+      content: '✖'; /* สัญลักษณ์ตอนกางสารบัญ (กดปิด) */
+    }
+    .tab-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 250px;
+      padding-right: 20px;
+      border-right: 2px solid transparent;
+      
+      opacity: 0;
+      margin-top: 15px;
+      overflow: hidden;
+      transform: translateX(-20px);
+      transition: opacity 0.3s ease, transform 0.4s ease, visibility 0.4s;
+      visibility: hidden;
+      max-height: 0;
+    }
+    .article-layout.show-sidebar .tab-buttons {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(0);
+      max-height: 1500px;
+      border-right-color: rgba(255, 255, 255, 0.5);
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      padding: 12px 16px;
+      font-family: 'Poppins', 'Sarabun', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: #7f8c8d;
+      cursor: pointer;
+      border-radius: 12px;
+      transition: all 0.3s;
+      text-align: left;
+      line-height: 1.4;
+      display: flex;
+      align-items: flex-start;
+    }
+    .tab-btn::before {
+      content: '';
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #e0e0e0;
+      margin-right: 10px; margin-top: 5px;
+      flex-shrink: 0;
+      transition: all 0.3s ease;
+    }
+    .tab-btn:hover { background: rgba(255,255,255,0.6); color: var(--green); transform: translateX(5px); }
+    .tab-btn:hover::before { background: var(--green); transform: scale(1.5); }
+    .tab-btn.active {
+      background: var(--green);
+      color: #fff;
+      box-shadow: 0 8px 20px rgba(134, 193, 64, 0.3);
+      transform: translateX(5px);
+    }
+    .tab-btn.active::before { background: #fff; transform: scale(1.5); box-shadow: 0 0 10px rgba(255,255,255,0.8); }
+    .tab-pane { display: none; animation: fadeIn 0.4s ease; }
+    .tab-pane.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Sub Tabs Styles (แท็บย่อยในรายละเอียด) */
+    .sub-tab-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 15px;
+      margin-bottom: 25px;
+      border-bottom: 2px solid #eaf6d0;
+      padding-bottom: 15px;
+    }
+    .sub-tab-btn {
+      background: #f5fbf0;
+      border: 1px solid var(--green);
+      font-family: 'Poppins', 'Sarabun', sans-serif;
+      font-size: 15px;
+      font-weight: bold;
+      color: var(--green);
+      cursor: pointer;
+      padding: 8px 16px;
+      border-radius: 20px;
+      transition: all 0.3s ease;
+    }
+    .sub-tab-btn:hover { background: var(--green); color: #fff; }
+    .sub-tab-btn.active {
+      background: var(--orange);
+      border-color: var(--orange);
+      color: #fff;
+      box-shadow: 0 4px 10px rgba(255, 127, 0, 0.3);
+    }
+    .sub-tab-pane { display: none; animation: fadeIn 0.4s ease; }
+    .sub-tab-pane.active { display: block; }
+
+    /* Sub Tab Pagination Buttons (ปุ่ม ก่อนหน้า/ถัดไป) */
+    .sub-tab-pagination {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+      border-top: 2px solid #eaf6d0;
+      padding-top: 20px;
+    }
+    .btn-sub-nav {
+      font-family: 'Poppins', 'Sarabun', sans-serif;
+      font-size: 15px;
+      font-weight: bold;
+      padding: 10px 20px;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-sub-nav.prev { background: #f5fbf0; color: var(--green); border: 1px solid var(--green); }
+    .btn-sub-nav.prev:hover { background: var(--green); color: #fff; }
+    .btn-sub-nav.next { background: var(--green); color: #fff; border: 1px solid var(--green); }
+    .btn-sub-nav.next:hover {
+      background: var(--orange); border-color: var(--orange); box-shadow: 0 4px 10px rgba(255, 127, 0, 0.3);
+    }
+
+    .loading { text-align: center; font-size: 18px; color: var(--text-grey); padding: 50px; }
+
+    /* Scroll to Top Button */
+    #scrollTopBtn {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      z-index: 1000;
+      border: none;
+      outline: none;
+      background-color: var(--orange);
+      color: white;
+      cursor: pointer;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      font-size: 20px;
+      box-shadow: 0 8px 15px rgba(255, 127, 0, 0.3);
+      transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+      opacity: 0;
+      visibility: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #scrollTopBtn.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    #scrollTopBtn:hover {
+      transform: translateY(-5px) scale(1.05);
+      box-shadow: 0 15px 25px rgba(255, 127, 0, 0.5);
+      background-color: #ff9429;
+    }
+
+    @media (max-width: 768px) {
+      header { flex-direction: column; gap: 10px; padding: 10px; }
+      .logo-container { width: 140px; }
+      nav.menu-links { flex-wrap: wrap; justify-content: center; gap: 15px; }
+      nav.menu-links a { font-size: 15px; }
+      .article-wrapper { padding: 30px 20px; }
+      .article-title { font-size: 26px; }
+      .article-body { font-size: 16px; }
+      .article-body h2 { font-size: 20px; padding: 10px 15px; }
+      .article-layout { flex-direction: column; gap: 20px; }
+      .article-layout.show-sidebar { gap: 20px; }
+      .tab-sidebar { position: static; width: 100%; }
+      .article-layout.show-sidebar .tab-sidebar { width: 100%; }
+      .tab-toggle-btn { width: 100%; border-radius: 25px; padding: 0 20px; justify-content: center; height: 45px; }
+      .tab-toggle-btn .btn-text { opacity: 1; width: auto; margin-left: 8px; }
+      .article-layout.show-sidebar .tab-toggle-btn .toggle-icon { transform: rotate(90deg); }
+      .tab-buttons { width: 100%; min-width: auto; padding-right: 0; border-right: none; }
+      .tab-btn:hover, .tab-btn.active { transform: none; }
+      .article-body img { max-width: 100%; }
+      .breadcrumb-title { max-width: 150px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="logo-container" aria-label="DietDoDo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 150" width="100%" height="auto">
+        <defs>
+          <style>
+            .font-main { font-family: 'Nunito', 'Segoe UI', Tahoma, sans-serif; font-weight: 900; font-size: 100px; fill: #0b0b0b; }
+            .color-green { fill: #86C140; }
+            .color-orange { fill: #F7931E; }
+            @keyframes bounce-dot { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+            .anim-bounce-dot { animation: bounce-dot 1s ease-in-out 3; }
+            @keyframes tree-sway { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+            .anim-tree { animation: tree-sway 1.5s ease-in-out infinite; transform-origin: 30px 25px; }
+          </style>
+        </defs>
+        <text x="20" y="115" class="font-main">D</text>
+        <rect x="110" y="55" width="22" height="60" rx="11" class="color-orange" />
+        <circle cx="121" cy="30" r="12" class="color-green anim-bounce-dot" />
+        <text x="145" y="115" class="font-main">e</text>
+        <text x="210" y="115" class="font-main">t</text>
+        <text x="275" y="115" class="font-main">D</text>
+        <g transform="translate(365, 30)">
+          <path class="anim-tree" d="M 5,25 C 2,15 15,5 30,20 C 35,15 50,5 55,25" fill="none" stroke="#86C140" stroke-width="8" stroke-linecap="round"/>
+          <circle cx="15" cy="45" r="7" class="color-green" />
+          <circle cx="45" cy="45" r="7" class="color-green" />
+          <path d="M 5,60 A 25 20 0 0 0 55,60" fill="none" stroke="#0b0b0b" stroke-width="12" stroke-linecap="round"/>
+        </g>
+        <text x="440" y="115" class="font-main">D</text>
+        <g transform="translate(550, 80)">
+          <circle cx="0" cy="8" r="22" fill="none" stroke="#0b0b0b" stroke-width="16" />
+        </g>
+      </svg>
+    </a>
+    <nav class="menu-links">
+      <a href="index.html">HOME</a>
+      <a href="menu.html">MENU</a>
+      <a href="about.html">ABOUT</a>
+    </nav>
+
+    <!-- แถบสถานะการอ่าน (Reading Progress Bar) ย้ายมาไว้ใน Header -->
+    <div class="progress-container">
+      <div class="progress-bar" id="myBar">
+        <!-- ตัวการ์ตูน Lottie วิ่งตามปลายเส้น -->
+        <div class="progress-icon">
+          <dotlottie-wc src="https://lottie.host/0d8be223-4867-4dc1-b1e1-de57d01cfa23/bSh6SF7Scp.lottie" style="width: 100%; height: 100%;" autoplay loop></dotlottie-wc>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="article-container">
+    <div id="article-content">
+      <p class="loading">กำลังโหลดบทความ...</p>
+    </div>
+  </div>
+
+  <!-- Lightbox Modal -->
+  <div id="imageLightbox" class="lightbox-modal" onclick="closeLightbox(event)">
+    <span class="lightbox-close" onclick="closeLightbox(event)">&times;</span>
+    <img class="lightbox-content" id="lightboxImg" alt="รูปภาพขยาย">
+  </div>
+
+  <!-- ปุ่ม Scroll to Top -->
+  <button id="scrollTopBtn" onclick="scrollToTop()" title="เลื่อนขึ้นบนสุด">▲</button>
+
+  <script>
+    // ตัวแปรสำหรับเก็บค่าตำแหน่งการเลื่อนก่อนหน้า (ใช้สำหรับเช็คทิศทางการเลื่อน)
+    let lastScrollTop = 0;
+
+    // ฟังก์ชันคำนวณแถบสถานะการอ่าน (Reading Progress)
+    window.onscroll = function() {
+      let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+      let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      let scrolled = (winScroll / height) * 100;
+      let myBar = document.getElementById("myBar");
+      if (myBar) {
+        myBar.style.width = scrolled + "%";
+        // หากอยู่บนสุดของหน้าจอ (winScroll = 0) ให้ซ่อนเส้น ถ้าเลื่อนลงมาแล้วให้แสดง
+        if (winScroll === 0) {
+          myBar.style.opacity = "0";
+        } else {
+          myBar.style.opacity = "1";
+        }
+      }
+
+      // เช็คทิศทางการเลื่อนหน้าจอเพื่อพลิกหันหน้าตัวการ์ตูน Lottie
+      let progressIcon = document.querySelector(".progress-icon");
+      if (progressIcon) {
+        if (winScroll > lastScrollTop) {
+          // เลื่อนหน้าจอลง (Scroll Down) ให้หันขวา (ค่าปกติ)
+          progressIcon.style.transform = "scaleX(1)";
+        } else if (winScroll < lastScrollTop) {
+          // เลื่อนหน้าจอขึ้น (Scroll Up) ให้พลิกหันซ้าย
+          progressIcon.style.transform = "scaleX(-1)";
+        }
+      }
+      lastScrollTop = winScroll <= 0 ? 0 : winScroll; // อัปเดตค่าตำแหน่งล่าสุด
+
+      // จัดการแสดง/ซ่อน ปุ่ม Scroll to Top
+      let scrollTopBtn = document.getElementById("scrollTopBtn");
+      if (scrollTopBtn) {
+        if (winScroll > 300) { // แสดงปุ่มเมื่อเลื่อนลงมามากกว่า 300px
+          scrollTopBtn.classList.add("show");
+        } else {
+          scrollTopBtn.classList.remove("show");
+        }
+      }
+    };
+
+    // ฟังก์ชันเลื่อนหน้าจอกลับขึ้นบนสุด
+    function scrollToTop() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ฟังก์ชันสำหรับเปลี่ยนแท็บ
+    function switchTab(btn, index) {
+      const wrapper = btn.closest('.article-wrapper'); /* เปลี่ยนให้ครอบคลุมถึงด้านบนสุด */
+      if (!wrapper) return;
+      wrapper.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      wrapper.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      wrapper.querySelector(`#tab-pane-${index}`).classList.add('active');
+
+      // อัตโนมัติ: หุบสารบัญกลับเมื่อเลือกเนื้อหาแล้ว เพื่อให้อ่านแบบเต็มจอ
+      const layout = document.querySelector('.article-layout');
+      if (layout && layout.classList.contains('show-sidebar')) {
+        layout.classList.remove('show-sidebar');
+      }
+
+      // เลื่อนหน้าจอกลับขึ้นไปด้านบนสุดของเนื้อหา
+      const articleTitle = wrapper.querySelector('.article-title');
+      if (articleTitle) {
+        const offset = articleTitle.getBoundingClientRect().top + window.scrollY - 80;
+        window.scrollTo({ top: offset, behavior: 'smooth' });
+      }
+    }
+
+    // ฟังก์ชันสำหรับเปลี่ยนแท็บย่อย (Sub-tab)
+    function switchSubTab(btn) {
+      const container = btn.closest('.tab-pane');
+      if (!container) return;
+      
+      const allBtns = Array.from(container.querySelectorAll('.sub-tab-btn'));
+      const index = allBtns.indexOf(btn);
+
+      container.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+      container.querySelectorAll('.sub-tab-pane').forEach(p => p.classList.remove('active'));
+      
+      btn.classList.add('active');
+      const paneId = btn.getAttribute('data-target');
+      const targetPane = container.querySelector(`#${paneId}`);
+      if (targetPane) targetPane.classList.add('active');
+    }
+
+    // ฟังก์ชันสำหรับปุ่ม ถัดไป/ก่อนหน้า ในแท็บย่อย
+    function navigateSubTab(btn, direction) {
+      const currentPane = btn.closest('.sub-tab-pane');
+      const container = btn.closest('.tab-pane');
+      if (!currentPane || !container) return;
+
+      const allPanes = Array.from(container.querySelectorAll('.sub-tab-pane'));
+      const currentIndex = allPanes.indexOf(currentPane);
+      
+      let targetIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+      
+      if (targetIndex >= 0 && targetIndex < allPanes.length) {
+        const targetBtn = container.querySelectorAll('.sub-tab-btn')[targetIndex];
+        if (targetBtn) {
+          switchSubTab(targetBtn);
+          const subTabNav = container.querySelector('.sub-tab-nav');
+          if (subTabNav) window.scrollTo({ top: subTabNav.getBoundingClientRect().top + window.scrollY - 100, behavior: 'smooth' });
+        }
+      }
+    }
+
+    // ฟังก์ชันสำหรับ ซ่อน/แสดง แถบแท็บ
+    function toggleSidebar() {
+      const layout = document.querySelector('.article-layout');
+      if (layout) {
+        layout.classList.toggle('show-sidebar');
+      }
+    }
+
+    // ฟังก์ชันเปิด Lightbox ขยายรูปภาพ
+    function openLightbox(imgSrc) {
+      const lightbox = document.getElementById("imageLightbox");
+      const lightboxImg = document.getElementById("lightboxImg");
+      lightboxImg.src = imgSrc;
+      lightbox.classList.add("show");
+      document.body.style.overflow = "hidden"; // ป้องกันการเลื่อนหน้าจอพื้นหลัง
+    }
+
+    // ฟังก์ชันปิด Lightbox
+    function closeLightbox(event) {
+      if (event.target.id === "imageLightbox" || event.target.classList.contains("lightbox-close")) {
+        document.getElementById("imageLightbox").classList.remove("show");
+        document.body.style.overflow = "auto"; // คืนค่าให้หน้าจอพื้นหลังเลื่อนได้ปกติ
+      }
+    }
+
+    // ฟังก์ชันซ่อมแซมและจัดหน้าตาราง Markdown อัตโนมัติ (แก้ปัญหาตารางไม่ขึ้นแบบ 100%)
+    function fixMarkdownTables(text) {
+      if (!text) return '';
+      
+      // 1. แก้อาการ YAML ยุบบรรทัด (Collapsed) โดยเปลี่ยน | เว้นวรรค | ให้ขึ้นบรรทัดใหม่
+      let expandedText = text.replace(/\|[ \t]+\|/g, '|\n|');
+
+      let lines = expandedText.split('\n');
+      let out = [];
+      
+      for (let i = 0; i < lines.length; i++) {
+        let originalLine = lines[i];
+        let line = originalLine.trim();
+        
+        // เช็คว่าบรรทัดนี้คือเส้นคั่นตารางหรือไม่ (เช่น |---|---|)
+        let noSpace = line.replace(/\s/g, '');
+        let isDelimiter = /^\|?[-:|]+\|?$/.test(noSpace) && noSpace.includes('-');
+        
+        if (isDelimiter && out.length > 0) {
+          let header = out.pop();
+          
+          let firstPipe = header.indexOf('|');
+          if (firstPipe > 0) {
+             // ถ้ามีข้อความอื่นติดอยู่หน้าตาราง ให้แยกออกไปอีกบรรทัด
+             let textBefore = header.substring(0, firstPipe).trim();
+             let tableHeader = header.substring(firstPipe).trim();
+             if (textBefore !== '') {
+                 out.push(textBefore);
+                 out.push(''); // เว้นบรรทัด
+             }
+             out.push(tableHeader);
+          } else {
+             // ถ้าก่อนหน้าตารางไม่ใช่บรรทัดว่าง ให้แทรกบรรทัดว่าง
+             if (out.length > 0 && out[out.length - 1].trim() !== '') {
+                 out.push('');
+             }
+             out.push(header);
+          }
+          out.push(originalLine); // ป้องกันไม่ให้เสียการเว้นวรรค (Indentation)
+        } else {
+          out.push(originalLine); // ป้องกันไม่ให้เสียการเว้นวรรค (Indentation)
+        }
+      }
+      return out.join('\n');
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // ตั้งค่าให้ marked.js รองรับการขึ้นบรรทัดใหม่ (Line breaks) ตามต้นฉบับ
+      if (typeof marked !== 'undefined') {
+        marked.use({ breaks: true, gfm: true });
+      }
+
+      const contentDiv = document.getElementById('article-content');
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      const articleSlug = urlParams.get('article');
+
+      if (!articleSlug) {
+        contentDiv.innerHTML = '<div class="article-wrapper"><p class="loading" style="color:var(--orange);">ไม่พบระบุบทความ</p></div>';
+        return;
+      }
+
+      const repo = 'pparnnrapp-sys/DietDoDo';
+      const folderPath = 'blog';
+      
+      const apiUrl = `https://api.github.com/repos/${repo}/contents/${folderPath}/${articleSlug}.md?t=${new Date().getTime()}`;
+      const rawUrl = `https://raw.githubusercontent.com/${repo}/main/${folderPath}/${articleSlug}.md?t=${new Date().getTime()}`;
+
+      let frontmatter = '';
+      let finalHtmlContent = '';
+      let image = '';
+
+      try {
+        // ดึงจาก API โดยตรงเพื่อความ Real-time (ไม่ติด Cache 5 นาทีของ GitHub)
+        let response = await fetch(apiUrl, { 
+          cache: 'no-store', 
+          headers: { 'Accept': 'application/vnd.github.v3.raw' } 
+        });
+        
+        // ถ้าดึงถี่เกินไปจน API Limit เต็ม ให้ถอยกลับไปดึงจาก raw url ชั่วคราว
+        if (!response.ok) {
+          console.warn("API Limit Exceeded: โดนจำกัดการดึงข้อมูล ระบบสลับไปใช้แคช 5 นาที");
+          response = await fetch(rawUrl, { cache: 'no-store' });
+        }
+        
+        if (!response.ok) throw new Error('ไม่สามารถโหลดเนื้อหาบทความได้ หรือไฟล์อาจถูกลบไปแล้ว');
+        const markdownText = await response.text();
+
+        frontmatter = '';
+        let body = markdownText.trim();
+        const frontmatterRegex = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/;
+        const match = body.match(frontmatterRegex);
+        if (match) {
+          frontmatter = match[1];
+          body = body.substring(match[0].length).trim();
+        }
+
+      let yamlData = {};
+      try {
+        if (frontmatter.trim()) {
+          yamlData = jsyaml.load(frontmatter) || {};
+        }
+      } catch (e) {
+        console.error('YAML parse error:', e);
+      }
+
+      let title = yamlData.title ? String(yamlData.title) : '';
+        if (!title) {
+          const titleMatch = body.match(/^#\s+(.+)/m);
+          title = titleMatch ? titleMatch[1].trim() : articleSlug;
+        }
+
+      const description = yamlData.description ? String(yamlData.description) : '';
+        let generatedBody = '';
+
+        // กำหนดชื่อแท็บพื้นฐาน 8 แท็บ
+        const knownLabels = {
+          'infomation': 'รายละเอียด',
+          'pathophysiology': 'พยาธิสภาพของโรค',
+          'clinical_assessment': 'การประเมินทางคลินิก',
+          'mnt': 'โภชนบำบัดทางการแพทย์',
+          'dietary_guidelines': 'แนวทางการจัดการอาหาร',
+          'food_drug_interactions': 'ปฏิกิริยาระหว่างอาหารและยา',
+          'complication_management': 'การจัดการภาวะแทรกซ้อน',
+          'ncp': 'กระบวนการดูแลทางโภชนาการ',
+          'references': 'แหล่งอ้างอิง',
+          'FAQ': 'คำถามที่พบบ่อย'
+        };
+
+        // ลิสต์ Key ที่จะถูกนำมาสร้างเป็นแท็บ
+        let tabKeys = Object.keys(knownLabels);
+        
+        let tabButtonsHtml = '';
+        let tabsData = [];
+
+        if (Object.keys(yamlData).length > 0) {
+          // ดึงเฉพาะข้อมูลแท็บที่กำหนดไว้ใน knownLabels เท่านั้น
+          tabKeys.forEach(key => {
+            let rawData = yamlData[key];
+            let content = '';
+            
+            if (rawData !== undefined && rawData !== null) {
+              if (Array.isArray(rawData)) {
+                if (rawData.length > 0 && typeof rawData[0] === 'object') {
+                  // แปลงรูปแบบรายการ List เป็นตาราง Markdown ให้อัตโนมัติ
+                  const headers = Object.keys(rawData[0]);
+                  content = '| ' + headers.join(' | ') + ' |\n| ' + headers.map(() => '---').join(' | ') + ' |\n';
+                  rawData.forEach(row => {
+                    content += '| ' + headers.map(h => (row[h] !== undefined && row[h] !== null ? String(row[h]).replace(/\|/g, '&#124;').replace(/\n/g, '<br>') : '')).join(' | ') + ' |\n';
+                  });
+                } else {
+                  // ถ้าข้อมูลเป็น List ใน YAML ปกติ ให้เติมขีดเป็น Bullet ให้อัตโนมัติ ป้องกันบรรทัดติดกัน
+                  content = rawData.map(item => {
+                    let text = String(item);
+                    if (!text.trim().startsWith('-') && !text.trim().startsWith('*') && !text.trim().match(/^\d+\./)) {
+                      return '- ' + text;
+                    }
+                    return text;
+                  }).join('\n');
+                }
+              } else if (typeof rawData === 'object') {
+                content = JSON.stringify(rawData, null, 2);
+              } else {
+                content = String(rawData);
+              }
+            }
+
+            if (content && content.trim() !== '') {
+              // ซ่อมแซมรูปแบบ Markdown
+              content = fixMarkdownTables(content);
+
+              const label = knownLabels[key];
+              tabsData.push({ key: key, label: label, content: content });
+            }
+          });
+        }
+
+        let finalRawHtml = '';
+        if (tabsData.length > 0) {
+          const tabButtonsDiv = document.createElement('div');
+          tabButtonsDiv.className = 'tab-buttons';
+          const tabPanelsDiv = document.createElement('div');
+          tabPanelsDiv.className = 'tab-panels';
+
+          tabsData.forEach((tab, index) => {
+            const isActive = index === 0 ? 'active' : '';
+            
+            const panel = document.createElement('div');
+            panel.className = `tab-pane ${isActive}`;
+            panel.id = `tab-pane-${index}`;
+            panel.setAttribute('data-tab-key', tab.key); /* เพิ่มตัวระบุหมวดหมู่ให้ CSS ดักจับได้ */
+            
+            let htmlContent = marked.parse(tab.content);
+
+            // แปลง <h1> เป็นแท็บย่อยสำหรับทุกแท็บหลักที่มีหัวข้อย่อย
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlContent;
+            
+            // ห่อตารางด้วย div เพื่อให้เลื่อนซ้าย-ขวาได้ (สำหรับตารางในแท็บ)
+            const tablesInTab = tempDiv.querySelectorAll('table');
+            tablesInTab.forEach(table => {
+              const wrapper = document.createElement('div');
+              wrapper.className = 'table-responsive';
+              table.parentNode.insertBefore(wrapper, table);
+              wrapper.appendChild(table);
+            });
+
+            const headings = tempDiv.querySelectorAll('h1');
+            
+            if (headings.length > 0) {
+                let subTabNav = '<div class="sub-tab-nav">';
+                let subTabContent = '<div class="sub-tab-content">';
+                
+                let introContent = document.createElement('div');
+                let sections = [];
+                let currentSection = introContent;
+                
+                Array.from(tempDiv.childNodes).forEach(node => {
+                    if (node.tagName && node.tagName.toLowerCase() === 'h1') {
+                        sections.push({ title: node.textContent, content: document.createElement('div') });
+                        currentSection = sections[sections.length - 1].content;
+                    } else {
+                        currentSection.appendChild(node.cloneNode(true));
+                    }
+                });
+                
+                // ถ้าย่อหน้าบนสุดมีเนื้อหาอยู่ ให้จับสร้างเป็นแท็บย่อยแรกชื่อ "ภาพรวม"
+                if (introContent.textContent.trim().length > 0) {
+                    sections.unshift({ title: 'ภาพรวม', content: introContent });
+                    introContent = document.createElement('div'); // เคลียร์ค่าทิ้งเพื่อไม่ให้แสดงซ้ำด้านบน
+                }
+                
+                let finalTabHtml = introContent.innerHTML;
+                
+                if (sections.length > 0) {
+                    subTabNav += sections.map((sec, i) => 
+                        `<button class="sub-tab-btn ${i===0?'active':''}" data-target="sub-tab-${index}-${i}" onclick="switchSubTab(this)">${sec.title}</button>`
+                    ).join('');
+                    subTabNav += '</div>';
+                    
+                    subTabContent += sections.map((sec, i) => {
+                        let navButtons = '<div class="sub-tab-pagination">';
+                        if (i > 0) {
+                            navButtons += `<button class="btn-sub-nav prev" onclick="navigateSubTab(this, 'prev')">&laquo; ก่อนหน้า</button>`;
+                        } else {
+                            navButtons += `<div></div>`;
+                        }
+                        if (i < sections.length - 1) {
+                            navButtons += `<button class="btn-sub-nav next" onclick="navigateSubTab(this, 'next')">ถัดไป &raquo;</button>`;
+                        } else {
+                            navButtons += `<div></div>`;
+                        }
+                        navButtons += '</div>';
+                        return `<div class="sub-tab-pane ${i===0?'active':''}" id="sub-tab-${index}-${i}">${sec.content.innerHTML}${navButtons}</div>`;
+                    }).join('');
+                    subTabContent += '</div>';
+                    
+                    // วางปุ่มแท็บย่อยไว้บนสุด ตามด้วยเนื้อหา Intro และกรอบเนื้อหาแท็บย่อย
+                    finalTabHtml = subTabNav + introContent.innerHTML + subTabContent;
+                }
+                htmlContent = finalTabHtml;
+            } else {
+                htmlContent = tempDiv.innerHTML;
+            }
+            
+            panel.innerHTML = htmlContent;
+            tabPanelsDiv.appendChild(panel);
+
+            const btn = document.createElement('button');
+            btn.className = `tab-btn ${isActive}`;
+            btn.setAttribute('onclick', `switchTab(this, ${index})`);
+            btn.textContent = tab.label;
+            tabButtonsDiv.appendChild(btn);
+          });
+
+          tabButtonsHtml = `
+            <div class="tab-sidebar">
+              <button class="tab-toggle-btn" onclick="toggleSidebar()">
+                <span class="toggle-icon"></span><span class="btn-text">สารบัญ</span>
+              </button>
+              ${tabButtonsDiv.outerHTML}
+            </div>
+          `;
+
+          finalRawHtml = tabPanelsDiv.outerHTML;
+        } else {
+          // ใช้ฟังก์ชันซ่อมแซมตาราง สำหรับเนื้อหาที่ไม่ได้อยู่ในแท็บ
+          finalRawHtml = marked.parse(fixMarkdownTables(body));
+        }
+
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = finalRawHtml;
+        
+        const imagesInBody = tempDiv.querySelectorAll('img');
+        imagesInBody.forEach(img => {
+          let src = img.getAttribute('src');
+          if (src && !src.startsWith('http') && !src.startsWith('data:')) {
+            let cleanSrc = src.startsWith('/') ? src.substring(1) : src;
+            if (cleanSrc.startsWith('./')) cleanSrc = cleanSrc.substring(2);
+            try { cleanSrc = decodeURIComponent(cleanSrc); } catch(e) {}
+            img.src = `https://raw.githubusercontent.com/${repo}/main/${encodeURI(cleanSrc)}?t=${new Date().getTime()}`;
+          }
+        });
+
+        // จัดการห่อตารางทั้งหมดในเนื้อหาให้เป็น Responsive (กรณีไม่มีแท็บ)
+        const tablesInBody = tempDiv.querySelectorAll('table');
+        tablesInBody.forEach(table => {
+          if (!table.parentElement.classList.contains('table-responsive')) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'table-responsive';
+            table.parentNode.insertBefore(wrapper, table);
+            wrapper.appendChild(table);
+          }
+        });
+
+        finalHtmlContent = tempDiv.innerHTML;
+
+        image = yamlData.cover_image || yamlData.featured_image || yamlData.image || yamlData.cover || yamlData.thumbnail || '';
+        if (image) image = String(image);
+        if (!image) { 
+          const firstImg = tempDiv.querySelector('img');
+          if (firstImg) image = firstImg.getAttribute('src');
+        }
+
+        if (image && !image.startsWith('http') && !image.startsWith('data:')) {
+          let cleanImage = image.startsWith('/') ? image.substring(1) : image;
+          if (cleanImage.startsWith('./')) cleanImage = cleanImage.substring(2);
+          try { cleanImage = decodeURIComponent(cleanImage); } catch(e) {}
+          image = `https://raw.githubusercontent.com/${repo}/main/${encodeURI(cleanImage)}?t=${new Date().getTime()}`;
+        }
+
+        // ดึงหมวดหมู่ (Category) จาก frontmatter
+        let category = yamlData.category ? String(yamlData.category) : '';
+        if (category === 'โภชนบำบัด') category = 'โภชนคลินิก'; // รองรับไฟล์บทความเก่าที่ใช้ชื่อเดิม
+        let catClass = '';
+        if(category === 'โภชนบริการ') catClass = 'service';
+        else if(category === 'โภชนคลินิก') catClass = 'therapy';
+        let tagHtml = category ? `<div style="text-align: center;"><span class="category-tag ${catClass}">${category}</span></div>` : '';
+
+        // สร้าง Breadcrumbs
+        let breadcrumbHtml = `
+          <nav class="breadcrumbs" aria-label="breadcrumbs">
+            <a href="index.html">หน้าหลัก</a>
+            <span class="separator">›</span>
+            <a href="knowledge.html">คลังความรู้</a>
+            ${category ? `<span class="separator">›</span><a href="knowledge.html?category=${encodeURIComponent(category)}" class="breadcrumb-category">${category}</a>` : ''}
+            <span class="separator">›</span>
+            <span class="breadcrumb-title" aria-current="page">${title}</span>
+          </nav>
+        `;
+
+        contentDiv.innerHTML = `
+          <div class="article-wrapper">
+            ${breadcrumbHtml}
+            ${tagHtml}
+            <h1 class="article-title">${title}</h1>
+            <div class="article-layout">
+              ${tabButtonsHtml}
+              <div class="article-body">${finalHtmlContent}</div>
+            </div>
+          </div>
+        `;
+        
+        // ติดตั้ง Event Listener ให้รูปภาพสำหรับแสดง Lightbox
+        const contentImages = contentDiv.querySelectorAll('.article-body img');
+        contentImages.forEach(img => {
+          img.style.cursor = 'pointer'; // เปลี่ยนเมาส์เป็นรูปนิ้วชี้
+          img.title = 'คลิกเพื่อขยายรูปภาพ';
+          img.addEventListener('click', function() { openLightbox(this.src); });
+        });
+        // ----------------------------------------
+      } catch (error) {
+        contentDiv.innerHTML = `<div class="article-wrapper"><p class="loading" style="color:var(--orange);">เกิดข้อผิดพลาด: ${error.message}</p></div>`;
+      }
+    });
+  </script>
+</body>
+</html>

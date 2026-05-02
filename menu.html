@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DietDoDo - เมนูหลัก</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;800&family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #dcecc9;
+      --bg-color-light: #f4f9ec;
+      --cloud-color: #fdfbf5;
+      --text-dark: #2c3e50;
+      --text-grey: #7f8c8d;
+      --orange: #f27d16;
+      --green: #86c140;
+      --red: #ff6b6b; /* สีแดงละมุน */
+      --yellow: #f1c40f; /* สีเหลือง */
+    }
+    
+    body { 
+      margin: 0; 
+      padding: 0; 
+      background: var(--bg-color-light);
+      background: radial-gradient(circle at 80% 50%, var(--bg-color-light) 0%, var(--bg-color) 100%);
+      background-attachment: fixed;
+      font-family: 'Sarabun', sans-serif;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Header (ใช้สไตล์ร่วมกับหน้า Home) */
+    header { position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 8px 40px; font-family: 'Poppins', sans-serif; background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.6); }
+    .logo-container { width: 180px; max-width: 100%; display: block; transition: transform 0.3s ease, filter 0.3s ease; }
+    .logo-container:hover { transform: translateY(-2px) scale(1.02); filter: drop-shadow(0 5px 15px rgba(255, 255, 255, 0.6)) brightness(1.1); }
+    nav.menu-links { display: flex; gap: 40px; }
+    nav.menu-links a { text-decoration: none; color: var(--text-grey); font-weight: 700; font-size: 18px; letter-spacing: 1.5px; transition: 0.3s; border-bottom: 3px solid transparent; padding-bottom: 5px; }
+    nav.menu-links a:hover, nav.menu-links a.active { color: var(--text-dark); transform: translateY(-2px); border-bottom: 3px solid var(--orange); }
+
+    /* ส่วนของเมนู */
+    .page-title {
+      text-align: center;
+      font-family: 'Poppins', sans-serif;
+      font-size: 48px;
+      font-weight: 800;
+      color: var(--text-dark);
+      margin: 5px 0 25px 0;
+      position: relative;
+      z-index: 10;
+    }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px 60px;
+      position: relative;
+      z-index: 10;
+    }
+
+    /* การ์ดเมนูแบบสวยงาม */
+    .menu-card {
+      background: #f4f4f4;
+      border-radius: 24px;
+      padding: 40px 30px;
+      text-align: center;
+      text-decoration: none;
+      color: var(--text-dark);
+      box-shadow: 0 10px 50px rgba(0,0,0,0.05);
+      transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+      border: 3px solid transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .menu-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      border-color: var(--green);
+    }
+    .menu-icon {
+      font-size: 60px;
+      margin-bottom: 20px;
+      background: #ffffff;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .menu-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin: 0 0 15px 0;
+      color: var(--text-dark);
+    }
+    .menu-desc {
+      font-size: 16px;
+      color: var(--text-grey);
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 768px) {
+      header { flex-direction: column; gap: 10px; padding: 10px; }
+      .logo-container { width: 140px; }
+      .page-title { font-size: 36px; margin: 10px 0 30px 0; }
+      nav.menu-links { flex-wrap: wrap; justify-content: center; gap: 15px; }
+      nav.menu-links a { font-size: 15px; }
+      .menu-grid { grid-template-columns: 1fr; padding: 0 15px 40px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="logo-container" aria-label="DietDoDo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 150" width="100%" height="auto">
+        <defs>
+          <style>
+            .font-main { font-family: 'Nunito', 'Segoe UI', Tahoma, sans-serif; font-weight: 900; font-size: 100px; fill: #0b0b0b; }
+            .color-green { fill: #86C140; }
+            .color-orange { fill: #F7931E; }
+            
+            /* แอนิเมชันเด้งขึ้นลงสำหรับจุดวงกลม */
+            @keyframes bounce-dot {
+              0%, 100% { transform: translateY(0); }
+              50% { transform: translateY(-15px); }
+            }
+            .anim-bounce-dot { animation: bounce-dot 1s ease-in-out 3; }
+
+            /* แอนิเมชันใบไม้(ตัว m) โดนลมพัด */
+            @keyframes tree-sway {
+              0%, 100% { transform: rotate(-4deg); }
+              50% { transform: rotate(4deg); }
+            }
+            .anim-tree { animation: tree-sway 1.5s ease-in-out infinite; transform-origin: 30px 25px; }
+          </style>
+        </defs>
+        <text x="20" y="115" class="font-main">D</text>
+        <rect x="110" y="55" width="22" height="60" rx="11" class="color-orange" />
+        <circle cx="121" cy="30" r="12" class="color-green anim-bounce-dot" />
+        <text x="145" y="115" class="font-main">e</text>
+        <text x="210" y="115" class="font-main">t</text>
+        <text x="275" y="115" class="font-main">D</text>
+        <g transform="translate(365, 30)">
+          <path class="anim-tree" d="M 5,25 C 2,15 15,5 30,20 C 35,15 50,5 55,25" fill="none" stroke="#86C140" stroke-width="8" stroke-linecap="round"/>
+          <circle cx="15" cy="45" r="7" class="color-green" />
+          <circle cx="45" cy="45" r="7" class="color-green" />
+          <path d="M 5,60 A 25 20 0 0 0 55,60" fill="none" stroke="#0b0b0b" stroke-width="12" stroke-linecap="round"/>
+        </g>
+        <text x="440" y="115" class="font-main">D</text>
+        <g transform="translate(550, 80)">
+          <circle cx="0" cy="8" r="22" fill="none" stroke="#0b0b0b" stroke-width="16" />
+        </g>
+      </svg>
+    </a>
+    <nav class="menu-links">
+      <a href="index.html">HOME</a>
+      <a href="menu.html" class="active">MENU</a>
+      <a href="about.html">ABOUT</a>
+    </nav>
+  </header>
+
+  <h1 class="page-title">OUR MENU</h1>
+
+  <div class="menu-grid">
+    <!-- ตัวอย่างการปิดเมนูที่ยังไม่พร้อมใช้งาน โดยใช้เครื่องหมายคอมเมนต์ครอบไว้
+    =============================================================
+    <a href="#" class="menu-card">
+      <div class="menu-icon">🔍</div>
+      <h2 class="menu-title">Nutrition Screening Tools</h2>
+      <p class="menu-desc">แบบประเมินและคัดกรองความเสี่ยงทางโภชนาการสำหรับผู้ป่วย</p>
+    </a>
+    <a href="#" class="menu-card">
+      <div class="menu-icon">🧪</div>
+      <h2 class="menu-title">Biochemical Data</h2>
+      <p class="menu-desc">แปลผลและวิเคราะห์ค่าทางห้องปฏิบัติการที่เกี่ยวข้องกับภาวะโภชนาการ</p>
+    </a>
+    =============================================================
+    -->
+    <a href="nutritioncal.html" class="menu-card">
+      <div class="menu-icon">🧮</div>
+      <h2 class="menu-title">Nutritional Calculation</h2>
+      <p class="menu-desc">ประเมินภาวะโภชนาการ คำนวณพลังงาน สัดส่วนโปรตีน คาร์บ ไขมัน และสารอาหารที่ควรได้รับ</p>
+    </a>
+    <!--
+    <a href="#" class="menu-card">
+      <div class="menu-icon">👶</div>
+      <h2 class="menu-title">Pediatric Nutrition</h2>
+      <p class="menu-desc">การประเมินและคำนวณโภชนาการสำหรับเด็กและทารก</p>
+    </a>
+    -->
+    <a href="food-exchange.html" class="menu-card">
+      <div class="menu-icon">🍱</div>
+      <h2 class="menu-title">FOOD EXCHANGE</h2>
+      <p class="menu-desc">จัดการสัดส่วนและหมวดหมู่อาหารแลกเปลี่ยน (Food Exchange) สำหรับผู้ป่วยเฉพาะโรค</p>
+    </a>
+    <!--
+    <a href="#" class="menu-card">
+      <div class="menu-icon">✍️</div>
+      <h2 class="menu-title">PES Statement</h2>
+      <p class="menu-desc">หลักการเขียนข้อวินิจฉัยปัญหาทางโภชนาการ (Problem, Etiology, Signs/Symptoms)</p>
+    </a>
+    <a href="#" class="menu-card">
+      <div class="menu-icon">📑</div>
+      <h2 class="menu-title">ADIME FORMAT</h2>
+      <p class="menu-desc">รูปแบบการบันทึกกระบวนการให้โภชนบำบัดทางการแพทย์อย่างเป็นระบบ</p>
+    </a>
+    -->
+    <a href="knowledge.html" class="menu-card">
+      <div class="menu-icon">📚</div>
+      <h2 class="menu-title">Knowledge</h2>
+      <p class="menu-desc">คลังความรู้และบทความด้านโภชนคลินิกและโภชนบริการ</p>
+    </a>
+    <!--
+    <a href="#" class="menu-card">
+      <div class="menu-icon">📋</div>
+      <h2 class="menu-title">GUIDELINE</h2>
+      <p class="menu-desc">คู่มืออ้างอิงและมาตรฐานแนวทางการปฏิบัติงานสำหรับนักกำหนดอาหาร</p>
+    </a>
+    -->
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DietDoDo - Nutritional Calculation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;800&family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    :root {
+      --bg-color: #dcecc9;
+      --bg-color-light: #f4f9ec;
+      --text-dark: #2c3e50;
+      --text-grey: #7f8c8d;
+      --orange: #f27d16;
+      --green: #86c140;
+      --primary: #86c140;
+      --secondary: #e2f0d9;
+    }
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    body { 
+      font-family: 'Sarabun', sans-serif; 
+      background: var(--bg-color-light);
+      background: radial-gradient(circle at 80% 50%, var(--bg-color-light) 0%, var(--bg-color) 100%);
+      background-attachment: fixed;
+      margin: 0; 
+      padding: 0; 
+      color: var(--text-dark);
+      min-height: 100vh;
+    }
+    .app-wrapper { display: flex; justify-content: center; padding: 20px; padding-bottom: 60px; }
+    .app-container { background: rgba(255, 255, 255, 0.95); width: 100%; max-width: 900px; border-radius: 24px; box-shadow: 0 15px 40px rgba(0,0,0,0.08); padding: 40px; border: 3px solid transparent; transition: border-color 0.3s; }
+    .app-container:hover { border-color: rgba(134, 193, 64, 0.3); }
+    
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; color: #34495e; }
+    input, select { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 12px; font-size: 16px; box-sizing: border-box; transition: 0.3s; background: #fff; }
+    input:focus, select:focus { border-color: var(--green); outline: none; }
+    
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px 20px;
+      align-items: start;
+    }
+    .form-group.full-width, .form-grid .full-width, .full-width {
+      grid-column: 1 / -1;
+    }
+    
+    .btn-primary { background: var(--orange); color: white; width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 20px; box-shadow: 0 8px 15px rgba(255, 127, 0, 0.2); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 20px rgba(255, 127, 0, 0.3); }
+    .progress-bar { height: 5px; background: #eee; margin-bottom: 25px; border-radius: 5px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--green); width: 33%; transition: 0.5s; }
+    .hidden { display: none; }
+
+    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+    
+    /* ส่วนหัวแบบตัวหนังสือเดิม */
+    .app-header { text-align: center; margin-bottom: 30px; }
+    .app-logo { font-family: 'Poppins', sans-serif; font-size: 32px; font-weight: 800; color: var(--text-dark); margin: 0; }
+    .app-subtitle { font-size: 15px; color: var(--text-grey); margin-top: 5px; }
+    .header-line { width: 50px; height: 4px; background: var(--orange); margin: 15px auto; border-radius: 2px; }
+
+    .info-icon {
+        display: inline-block !important;
+        background: transparent !important;
+        border: none !important;
+        width: auto !important;
+        height: auto !important;
+        padding: 0 !important;
+        color: #3498db !important;
+        font-size: 14px;
+        font-weight: bold;
+        cursor: help;
+        font-style: normal;
+        position: relative;
+    }
+    /* ส่วนของ Tooltip */
+    .info-icon:hover::after {
+        content: attr(data-tip);
+        position: absolute;
+        bottom: 25px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #2c3e50;
+        color: white;
+        padding: 10px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        white-space: pre-wrap;
+        width: 220px;
+        z-index: 9999;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        text-align: left;
+        line-height: 1.4;
+        font-weight: normal;
+    }
+    /* เครื่องคิดเลข */
+    .calc-trigger { position: fixed; bottom: 20px; right: 20px; background: #1a1a1a; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,0.3); z-index: 10001; font-size: 24px; user-select: none; transition: transform 0.2s;}
+    .calc-trigger:hover { transform: scale(1.05); }
+    .calc-container { display: none; position: fixed; bottom: 80px; right: 20px; width: 230px; background: #000000; padding: 15px; border-radius: 25px; z-index: 10001; box-shadow: 0 15px 35px rgba(0,0,0,0.4); border: 1px solid #333; font-family: 'Poppins', sans-serif;}
+    .calc-display { width: 100%; height: 55px; background: transparent; color: white; margin-bottom: 10px; text-align: right; padding: 10px; font-size: 32px; font-weight: 300; border:none; box-sizing: border-box; outline: none; letter-spacing: 1px;}
+    .calc-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .calc-btn { width: 100%; aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center; border: none; border-radius: 50%; cursor: pointer; font-size: 20px; font-weight: 500; transition: filter 0.2s; padding: 0;}
+    .calc-btn:active { filter: brightness(1.3); }
+    .calc-btn.num { background: #333333; color: white; }
+    .calc-btn.op { background: #ff9f0a; color: white; font-size: 24px; }
+    .calc-btn.top { background: #a5a5a5; color: black; }
+    .calc-btn.zero { aspect-ratio: auto; grid-column: span 2; border-radius: 30px; padding-left: 20px; justify-content: flex-start; }
+    
+    /* Header & Navigation */
+    header { position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 8px 40px; font-family: 'Poppins', sans-serif; background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.6); }
+    .logo-container { width: 180px; max-width: 100%; display: block; transition: transform 0.3s ease, filter 0.3s ease; }
+    .logo-container:hover { transform: translateY(-2px) scale(1.02); filter: drop-shadow(0 5px 15px rgba(255, 255, 255, 0.6)) brightness(1.1); }
+    nav.menu-links { display: flex; gap: 40px; }
+    nav.menu-links a { text-decoration: none; color: var(--text-grey); font-weight: 700; font-size: 18px; letter-spacing: 1.5px; transition: 0.3s; border-bottom: 3px solid transparent; padding-bottom: 5px; }
+    nav.menu-links a:hover, nav.menu-links a.active { color: var(--text-dark); transform: translateY(-2px); border-bottom: 3px solid var(--orange); }
+    @media (max-width: 768px) {
+      header { flex-direction: column; gap: 10px; padding: 10px; }
+      .logo-container { width: 140px; }
+      nav.menu-links { flex-wrap: wrap; justify-content: center; gap: 15px; }
+      nav.menu-links a { font-size: 15px; }
+      .app-container { padding: 20px 10px; }
+      .result-grid { grid-template-columns: 1fr; }
+      .result-card.full { grid-column: span 1; }
+      .macro-container { flex-direction: column; gap: 15px; }
+      /* แก้กริดช่องติ๊กถูกในมือถือให้เป็นแถวเดียว */
+      .form-grid { grid-template-columns: 1fr; }
+      .checkbox-grid { grid-template-columns: 1fr !important; gap: 15px !important; }
+      .checkbox-grid-inner { grid-template-columns: 1fr !important; }
+      /* ซ่อน Tooltip หรือเปลี่ยนตำแหน่งเพื่อไม่ให้ล้นจอ */
+      .info-icon:hover::after { width: 200px; left: auto; right: 0; transform: none; }
+      
+      /* การแสดงผลหน้าสรุปผล (Page 3) บนมือถือ */
+      
+      .export-area { padding: 15px 10px !important; word-break: break-word; }
+      .info-card { padding: 15px 10px !important; border-radius: 16px !important; }
+      .summary-box { padding: 12px 10px !important; font-size: 15px !important; }
+
+      .general-info-layout { grid-template-columns: 1fr !important; gap: 10px; }
+      .full-col-mobile { grid-column: 1 / -1 !important; }
+      .square-box { padding: 12px 10px !important; }
+      .square-box .box-title { font-size: 14px; padding-bottom: 5px; margin-bottom: 4px; }
+      .square-box .box-item { font-size: 13px; flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 5px; margin-bottom: 5px; line-height: 1.3; }
+      .square-box .box-item span { flex: 1; min-width: 40%; }
+      .square-box .box-item strong { text-align: right; flex: 1; min-width: 40%; }
+      .summary-box.warning-box { font-size: 13px !important; padding: 10px !important; }
+
+      .highlight-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
+      
+      /* จัด Macro ให้อยู่บรรทัดเดียวกัน 3 ช่องพอดี ไม่ต้องเรียงลงมาให้ยาว */
+      .macro-clean-container { flex-direction: row !important; gap: 5px !important; padding: 12px 5px !important; border-radius: 12px !important; }
+      .macro-clean-item { border-bottom: none !important; border-right: 1px dashed #e2dcd2 !important; padding-bottom: 0 !important; flex: 1; }
+      .macro-clean-item:last-child { border-right: none !important; }
+      .macro-clean-title { font-size: 13px !important; gap: 2px !important; }
+      .macro-clean-val { font-size: 18px !important; }
+      .macro-clean-sub { font-size: 12px !important; }
+      .macro-clean-item div[style*="font-size: 16px"] { font-size: 12px !important; margin-top: 4px !important; }
+      
+      .summary-grid-2col { grid-template-columns: 1fr !important; gap: 10px !important; }
+      .summary-flex-wrap { flex-direction: row !important; flex-wrap: wrap !important; align-items: center !important; justify-content: flex-start !important; gap: 5px 15px !important; }
+      .summary-divider { display: none; }
+      .health-info-row { flex-direction: row !important; flex-wrap: wrap !important; align-items: center !important; gap: 5px 15px !important; }
+      .health-info-item { flex-wrap: wrap; word-break: break-word; width: auto !important; max-width: 100%; }
+      
+      .report-title { font-size: 18px !important; }
+      .report-title span { font-size: 20px !important; }
+      .highlight-value { font-size: 22px !important; }
+      .highlight-value.sub { font-size: 22px !important; }
+      .highlight-item { padding: 15px !important; border-radius: 12px !important; }
+
+      .water-clean, .fiber-clean, .sodium-clean, .sugar-clean { padding: 12px 10px !important; font-size: 14px !important; margin-top: 10px !important; border-radius: 12px !important; }
+      .water-clean .val, .fiber-clean .val, .sodium-clean .val, .sugar-clean .val { font-size: 16px !important; display: inline-block !important; margin-top: 0 !important; margin-left: 5px !important; }
+      .sodium-clean .details, .sugar-clean .details { font-size: 12px !important; margin-top: 5px !important; }
+      
+      .action-buttons-container { flex-direction: column; gap: 12px; }
+    }
+    
+    #pregnancy-section {
+        transition: all 0.3s ease;
+        border-left: 5px solid #e67e22;
+        padding-left: 15px;
+        margin-top: 10px;
+    }
+    
+    .export-area { background: white; padding: 30px; border-radius: 16px; margin-bottom: 20px; border: 1px solid #eee; box-shadow: 0 5px 20px rgba(0,0,0,0.02); }
+    .summary-grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 15px 20px; line-height: 1.6; }
+    .summary-flex-wrap { display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; row-gap: 5px; }
+    .summary-divider { color: #ddd; margin: 0 8px; }
+    .health-info-row { display: flex; flex-wrap: wrap; align-items: center; row-gap: 5px; }
+    .health-info-item { display: flex; align-items: baseline; gap: 5px; }
+    
+    /* กล่องข้อมูลย่อยแบบ Clean */
+    .summary-box { background: #fdfdfd; border: 1px solid #eaeaea; padding: 15px 20px; border-radius: 12px; font-size: 18px; line-height: 1.6; }
+    .summary-box.orange-border { border-left: 5px solid var(--orange); }
+    .summary-box.green-border { border-left: 5px solid #86C140; }
+    .summary-box.warning-box { background: #fff0f0; border: 1px solid #ffcccc; color: #c0392b; font-size: 16px; }
+    .summary-box.note-box { background: #fffbe6; border: 1px solid #ffe58f; }
+    .action-buttons-container { display: flex; gap: 10px; margin-top: 20px; }
+
+    /* Layout ใหม่สำหรับข้อมูลทั่วไป 2x2 Grid */
+    .general-info-layout { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+    .general-info-layout .full-col { grid-column: 1 / -1; }
+    .square-box { display: flex; flex-direction: column; gap: 8px; justify-content: flex-start; }
+    .square-box .box-title { font-weight: 800; font-size: 16px; margin-bottom: 5px; border-bottom: 1px dashed #eee; padding-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+    .square-box .box-item { display: flex; justify-content: space-between; font-size: 15px; line-height: 1.4; gap: 10px; }
+    .square-box .box-item span { color: var(--text-grey); flex-shrink: 0; }
+    .square-box .box-item strong { color: var(--text-dark); text-align: right; word-break: break-word; }
+
+    /* สไตล์หน้าสรุปผลแบบ Clean Report (ไม่ใช้การ์ด คุมโทน) */
+    .report-wrapper { color: var(--text-dark); }
+    .report-title { font-size: 22px; font-weight: 800; color: var(--green); border-bottom: 2px solid var(--bg-color-light); padding-bottom: 10px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+    .report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .report-item { display: flex; flex-direction: column; padding-bottom: 12px; border-bottom: 1px dashed #eee; }
+    .report-item.full { grid-column: 1 / -1; }
+    .report-item.no-border { border-bottom: none; padding-bottom: 0; }
+    .report-label { font-size: 13px; color: var(--text-grey); font-weight: bold; margin-bottom: 5px; }
+    .report-value { font-size: 16px; color: var(--text-dark); line-height: 1.5; }
+    
+    .highlight-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; text-align: center; align-items: stretch; }
+    .highlight-item { background: #ffffff; border: 1px solid #eaeaea; border-radius: 16px; padding: 25px 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: center; }
+    .highlight-item.energy-box { border-bottom: 4px solid var(--orange); }
+    .highlight-item.bmi-box { border-bottom: 4px solid var(--green); }
+    .highlight-item.ibw-box { border-bottom: 4px solid #3498db; }
+    .highlight-label { font-size: 14px; color: var(--text-grey); font-weight: bold; margin-bottom: 8px; }
+    .highlight-value { font-size: 32px; font-weight: 800; color: var(--orange); line-height: 1.2; }
+    .highlight-value.sub { font-size: 32px; color: var(--text-dark); }
+    .highlight-unit { font-size: 16px; font-weight: normal; color: #95a5a6; }
+    .highlight-desc { font-size: 14px; margin-top: 8px; font-weight: bold; }
+    
+    .macro-clean-container { display: flex; justify-content: space-around; background: #fdfbf5; border: 1px solid #f0eae1; border-radius: 16px; padding: 25px 15px; margin-top: 15px; }
+    .macro-clean-item { text-align: center; flex: 1; border-right: 1px dashed #e2dcd2; }
+    .macro-clean-item:last-child { border-right: none; }
+    .macro-clean-title { font-size: 16px; font-weight: bold; color: var(--text-grey); margin-bottom: 8px; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .macro-clean-val { font-size: 28px; font-weight: 800; color: var(--green); margin-bottom: 2px; }
+    .macro-clean-sub { font-size: 15px; color: var(--text-grey); }
+
+    .water-clean { text-align: center; margin-top: 25px; padding: 20px; border-radius: 16px; background: #eef7ff; color: #1c5d99; font-weight: bold; font-size: 18px; border: 1px dashed #d1e7fd; }
+    .water-clean .val { font-size: 24px; margin-left: 10px; color: #194a7a; }
+
+    .fiber-clean { text-align: center; margin-top: 15px; padding: 20px; border-radius: 16px; background: #f0f9e8; color: #388e3c; font-weight: bold; font-size: 18px; border: 1px dashed #c8e6c9; }
+    .fiber-clean .val { font-size: 24px; margin-left: 10px; color: var(--green); }
+
+    .sodium-clean { text-align: center; margin-top: 15px; padding: 20px; border-radius: 16px; background: #f8f9fa; color: #495057; font-weight: bold; font-size: 18px; border: 1px dashed #dee2e6; }
+    .sodium-clean .val { font-size: 24px; margin-left: 10px; color: #343a40; }
+    .sodium-clean .details { font-size: 14px; font-weight: normal; margin-top: 10px; line-height: 1.5; color: #6c757d; }
+
+    .sugar-clean { text-align: center; margin-top: 15px; padding: 20px; border-radius: 16px; background: #fff7f5; color: #c94023; font-weight: bold; font-size: 18px; border: 1px dashed #ffddd6; }
+    .sugar-clean .val { font-size: 24px; margin-left: 10px; color: #d9480f; }
+    .sugar-clean .details { font-size: 14px; font-weight: normal; margin-top: 10px; line-height: 1.5; color: #c94023; }
+
+    /* สไตล์สำหรับ Info Cards */
+    .combined-info-grid {
+        display: grid; /* จำเป็นต้องมีเพื่อให้การจัดคอลัมน์และระยะห่างทำงาน */
+        grid-template-columns: repeat(3, 1fr);
+        align-items: stretch;
+        gap: 15px; /* ปรับจุดที่ 1: ระยะห่างระหว่างคอลัมน์ (เพิ่ม/ลด ตัวเลข 15px ได้ตามต้องการ) */
+    }
+    .info-section {
+        padding: 0 20px; /* ปรับจุดที่ 2: ความกว้างซ้ายขวาด้านใน (ถ้าอยากให้ข้อความชิดเส้นประมากขึ้น ให้ลดเลข 20px ลง) */
+        border-right: 1px dashed #e0e0e0;
+    }
+    .info-section:first-child { padding-left: 0; }
+    .info-section:last-child { padding-right: 0; border-right: none; }
+    
+    @media (max-width: 900px) {
+        .combined-info-grid { grid-template-columns: 1fr; gap: 20px; }
+        .info-section { padding: 0 !important; border-right: none !important; border-bottom: 1px dashed #e0e0e0; padding-bottom: 20px; }
+        .info-section:last-child { border-bottom: none; padding-bottom: 0; }
+    }
+
+    .info-card {
+        background: #ffffff;
+        border: 2px solid #eaf6d0;
+        border-radius: 24px;
+        padding: 35px 30px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+        position: relative;
+        overflow: hidden;
+    }
+    /* แถบสีตกแต่งด้านบนของการ์ด */
+    .info-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 6px;
+        background: linear-gradient(90deg, var(--green) 50%, var(--orange) 50%);
+    }
+    
+    .info-card-title {
+        font-size: 17px;
+        font-weight: 900;
+        color: #000000;
+        margin: 0 0 20px 0;
+        padding-bottom: 18px;
+        border-bottom: 2px solid #e0e0e0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    /* ไอคอนในหัวข้อการ์ด */
+    .title-icon {
+        background: #f9f9f9;
+        width: 40px; height: 40px;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 12px;
+        font-size: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .title-icon.bg-green { background: #f0f9e8; color: var(--green); }
+    .title-icon.bg-orange { background: #fff4e6; color: var(--orange); }
+    .title-icon.bg-blue { background: #eaf4fb; color: #3498db; }
+    
+    .info-card .info-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .info-card .info-list li { 
+        display: flex; justify-content: space-between; align-items: center; 
+        font-size: 16px; padding: 12px 10px; background: transparent;
+        border: none; border-bottom: 1px dashed rgba(0,0,0,0.1); border-radius: 8px; transition: all 0.2s;
+    }
+    .info-card .info-list li:last-child { border-bottom: none; }
+    .info-card .info-list li:hover { transform: translateX(5px); background: rgba(0,0,0,0.02); }
+    .info-card .info-list .label { color: var(--text-dark); font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    .info-card .info-list .label::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #bdc3c7; }
+    .info-card .info-list .data { font-weight: normal; color: var(--text-dark); text-align: right; max-width: 60%; font-size: 16px; }
+    .info-card .full-width-info { grid-column: 1 / -1; }
+    .info-card .data.tag-container {
+        justify-content: flex-end;
+        max-width: 60%;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="logo-container" aria-label="DietDoDo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 150" width="100%" height="auto">
+        <defs>
+          <style>
+            .font-main { font-family: 'Nunito', 'Segoe UI', Tahoma, sans-serif; font-weight: 900; font-size: 100px; fill: #0b0b0b; }
+            .color-green { fill: #86C140; }
+            .color-orange { fill: #F7931E; }
+            @keyframes bounce-dot {
+              0%, 100% { transform: translateY(0); }
+              50% { transform: translateY(-15px); }
+            }
+            .anim-bounce-dot { animation: bounce-dot 1s ease-in-out 3; }
+            @keyframes tree-sway {
+              0%, 100% { transform: rotate(-4deg); }
+              50% { transform: rotate(4deg); }
+            }
+            .anim-tree { animation: tree-sway 1.5s ease-in-out infinite; transform-origin: 30px 25px; }
+          </style>
+        </defs>
+        <text x="20" y="115" class="font-main">D</text>
+        <rect x="110" y="55" width="22" height="60" rx="11" class="color-orange" />
+        <circle cx="121" cy="30" r="12" class="color-green anim-bounce-dot" />
+        <text x="145" y="115" class="font-main">e</text>
+        <text x="210" y="115" class="font-main">t</text>
+        <text x="275" y="115" class="font-main">D</text>
+        <g transform="translate(365, 30)">
+          <path class="anim-tree" d="M 5,25 C 2,15 15,5 30,20 C 35,15 50,5 55,25" fill="none" stroke="#86C140" stroke-width="8" stroke-linecap="round"/>
+          <circle cx="15" cy="45" r="7" class="color-green" />
+          <circle cx="45" cy="45" r="7" class="color-green" />
+          <path d="M 5,60 A 25 20 0 0 0 55,60" fill="none" stroke="#0b0b0b" stroke-width="12" stroke-linecap="round"/>
+        </g>
+        <text x="440" y="115" class="font-main">D</text>
+        <g transform="translate(550, 80)">
+          <circle cx="0" cy="8" r="22" fill="none" stroke="#0b0b0b" stroke-width="16" />
+        </g>
+      </svg>
+    </a>
+    <nav class="menu-links">
+      <a href="index.html">HOME</a>
+      <a href="menu.html" class="active">MENU</a>
+      <a href="about.html">ABOUT</a>
+    </nav>
+  </header>
+
+<div class="app-wrapper">
+<div class="app-container">
+  <div class="app-header">
+    <h1 class="app-logo">Nutritional Calculation</h1>
+    <div class="header-line"></div>
+    <p class="app-subtitle">คำนวณพลังงาน และสัดส่วนสารอาหาร</p>
+  </div>
+
+  <div class="progress-bar"><div id="prog" class="progress-fill"></div></div>
+
+  <form id="dietForm">
+    <div id="p1" class="page active">
+      <h3 style="margin-top:0; color: var(--primary);">1/3 ข้อมูลทั่วไป</h3>
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label>ชื่อ (ถ้ามี)</label>
+          <input type="text" id="userName" placeholder="ระบุชื่อ">
+        </div>
+
+        <div class="form-group">
+          <label>เพศ <span style="color:red;">*</span></label>
+          <select id="gender" onchange="checkGender()" required>
+            <option value="">-- เลือกเพศ --</option>
+            <option value="ชาย">ชาย</option>
+            <option value="หญิง">หญิง</option>
+          </select>
+        </div>
+
+        <div id="pregnancy-section" class="form-group" style="display: none;">
+          <label style="color: #e67e22;">สถานะการตั้งครรภ์ / ให้นมบุตร</label>
+          <select name="pregnancy_status" style="border-color: #ffcccc; background-color: #fff9f9;">
+            <option value="none">-- ไม่ได้ตั้งครรภ์ และไม่ได้ให้นมบุตร --</option>
+            <option value="pregnant">ตั้งครรภ์</option>
+            <option value="lactating">ให้นมบุตร</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>อายุ (ปี) <span style="color:red;">*</span></label>
+          <input type="number" id="age" inputmode="numeric" placeholder="ระบุอายุ" required>
+        </div>
+
+        <div class="form-group">
+          <label>ส่วนสูง (cm) <span style="color:red;">*</span></label>
+          <input type="number" id="height" step="0.1" inputmode="decimal" placeholder="170.0" required>
+        </div>
+
+        <div class="form-group">
+          <label>น้ำหนักจริงในปัจจุบัน-ABW (kg) <span style="color:red;">*</span></label>
+          <input type="number" id="weight" step="0.1" inputmode="decimal" placeholder="60.0" required>
+        </div>
+
+        <div class="form-group">
+          <label>น้ำหนักที่วัดได้โดยปกติ-UBW (kg) <span style="color:red;">*</span></label>
+          <input type="number" id="ubw" step="0.1" inputmode="decimal" placeholder="65.0" required>
+        </div>
+
+        <div class="form-group">
+          <label>ระยะเวลาที่น้ำหนักเปลี่ยน</label>
+          <select id="weightDuration">
+            <option value="not_specified">ไม่ระบุ</option>
+            <option value="gradual">ค่อยเป็นค่อยไป</option>
+            <option value="1">ภายใน 1 เดือน</option>
+            <option value="3">ภายใน 3 เดือน</option>
+            <option value="6">ภายใน 6 เดือน</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>
+            เส้นรอบเอว (cm)
+            <span class="info-icon" data-tip="สูตรแปลง: นิ้ว x 2.54 = cm">ⓘ</span>
+          </label>
+          <input type="number" id="waist" step="0.1" inputmode="decimal" placeholder="ระบุเป็น cm">
+        </div>
+
+        <div class="form-group">
+          <label>
+            Physical Activity (AF)
+            <span class="info-icon" data-tip="• จำกัดการเคลื่อนไหว/ใช้เครื่องช่วยหายใจ: 1.1&#10;• นั่งนานๆ หรือนอนติดเตียง: 1.2&#10;• กิจกรรมปกติ: 1.375&#10;• ออกกำลังกาย 3 ครั้ง/สัปดาห์: 1.375&#10;• ออกกำลังกาย 5 ครั้ง/สัปดาห์: 1.55&#10;• ออกกำลังกาย 7 ครั้ง/สัปดาห์: 1.725&#10;• นักกีฬามืออาชีพ: 1.9">ⓘ</span>
+            <span style="color:red;">*</span>
+          </label>
+          <input type="number" id="af" step="0.001" inputmode="decimal" placeholder="กรอกค่า AF เช่น 1.375" required>
+        </div>
+
+        <div class="form-group">
+          <label>
+            Stress Factor (SF)
+            <span class="info-icon" data-tip="• ปกติ / ไตวาย (ไม่ล้าง) / ผ่าตัดเล็ก / ติดเชื้อน้อย: 1.0&#10;• ขาดอาหาร (Starvation): 0.7&#10;• ไตวาย (ฟอกเลือด): 1.0 - 1.05&#10;• ผ่าตัดใหญ่: 1.1 - 1.2&#10;• ติดเชื้อในช่องท้อง: 1.15&#10;• การติดเชื้อปานกลาง: 1.2 - 1.3&#10;• การติดเชื้อรุนแรง: 1.4 - 1.5&#10;• การบาดเจ็บเนื้อเยื่อ: 1.15 - 1.35&#10;• กระดูกหัก: 1.2 - 1.35&#10;• แผลไฟไหม้ < 20%: 1.0 - 1.5&#10;• แผลไฟไหม้ 20-40%: 1.5 - 1.85&#10;• แผลไฟไหม้ > 40%: 1.85 - 1.95">ⓘ</span>
+            <span style="color:red;">*</span>
+          </label>
+          <input type="number" id="sf" step="0.001" inputmode="decimal" placeholder="กรอกค่า SF เช่น 1.0" required>
+        </div>
+
+        <div class="form-group">
+          <label>
+            อุณหภูมิร่างกาย (TF)
+            <span class="info-icon" data-tip="• 36.0 - 37.0°C: 1.0&#10;• 37.5°C: 1.05&#10;• 38.0°C: 1.1&#10;• 38.5°C: 1.15&#10;• 39.0°C: 1.2&#10;• 39.5°C: 1.25&#10;• 40.0°C: 1.3&#10;• 40.5°C: 1.35&#10;• 41.0°C: 1.4&#10;• 41.5°C: 1.45&#10;• 42.0°C: 1.5">ⓘ</span>
+            <span style="color:red;">*</span>
+          </label>
+          <input type="number" id="tf" step="0.01" inputmode="decimal" placeholder="กรอกค่า TF เช่น 1.0" required>
+        </div>
+
+        <div class="form-group full-width">
+          <label style="display: block; font-weight: bold; margin-bottom: 10px;">โรคประจำตัว</label>
+          <div class="checkbox-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; background: #f9f9f9; padding: 15px; border-radius: 10px; border: 1px solid #eee;">
+            <label style="display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer;">
+              <input type="checkbox" name="disease" value="โรคเบาหวาน" style="width: 16px; height: 16px;"> โรคเบาหวาน
+            </label>
+            <label style="display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer;">
+              <input type="checkbox" name="disease" value="โรคความดันโลหิตสูง" style="width: 16px; height: 16px;"> โรคความดันโลหิตสูง
+            </label>
+            <label style="display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer;">
+              <input type="checkbox" name="disease" value="โรคไขมันในเลือดสูง" style="width: 16px; height: 16px;"> โรคไขมันในเลือดสูง
+            </label>
+            <label style="display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer;">
+              <input type="checkbox" name="disease" value="โรคไตเรื้อรัง (CKD)" style="width: 16px; height: 16px;"> โรคไตเรื้อรัง (CKD)
+            </label>
+            <label style="display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer;">
+              <input type="checkbox" name="disease" value="โรคตับ/ไขมันพอกตับ" style="width: 16px; height: 16px;"> โรคตับ/ไขมันพอกตับ
+            </label>
+            <label style="display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer;">
+              <input type="checkbox" name="disease" value="โรคหัวใจ" style="width: 16px; height: 16px;"> โรคหัวใจ
+            </label>
+            <label style="display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer;">
+              <input type="checkbox" name="disease" value="โรคเก๊าท์" style="width: 16px; height: 16px;"> โรคเก๊าท์
+            </label>
+            <label style="display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer;">
+              <input type="checkbox" name="disease" value="โรคมะเร็ง" style="width: 16px; height: 16px;"> โรคมะเร็ง
+            </label>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; grid-column: 1 / -1;">
+            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; margin: 0;">
+              <input type="checkbox" name="disease" value="อื่นๆ" style="width: 16px; height: 16px; flex-shrink: 0;" onchange="toggleOtherDisease()"> <span style="white-space: nowrap;">อื่น ๆ:</span>
+            </label>
+              <input type="text" id="otherDisease" style="width: 100%; border: none; border-bottom: 1px solid #ccc; border-radius: 0; background: transparent; padding: 2px 5px; height: auto; outline: none; font-size: 14px; box-shadow: none;" placeholder="ระบุเพิ่มเติม..." disabled>
+          </div>
+          </div>
+      </div>
+
+        <div class="form-group">
+          <label>อาการทางเดินอาหาร</label>
+          <select id="giSymptom" name="gi" onchange="toggleOtherGiSymptom()">
+            <option value="none" selected>ปกติ (ไม่มีอาการ)</option>
+            <option value="Acid Reflux">กรดไหลย้อน / แสบร้อนกลางอก</option>
+            <option value="Bloating">ท้องอืด / มีแก๊สในท้องมาก</option>
+            <option value="Constipation">ท้องผูก (ถ่ายไม่ออก)</option>
+            <option value="Diarrhea">ท้องเสีย / ถ่ายเหลว</option>
+            <option value="Gas">ผายลมบ่อย / เรอ</option>
+            <option value="Abdominal Pain">ปวดท้อง / ปวดเกร็ง</option>
+            <option value="Nausea">คลื่นไส้ / อาเจียน</option>
+            <option value="Dysphagia">กลืนลำบาก / สำลัก</option>
+            <option value="Other">อื่นๆ (โปรดระบุ)</option>
+          </select>
+          <input type="text" id="othergiSymptom" class="hidden" placeholder="ระบุอาการทางเดินอาหารอื่นๆ" style="margin-top:10px;">
+        </div>
+
+        <div class="form-group">
+          <label>ความถี่ของอาการ</label>
+          <select id="symptomFrequency">
+            <option value="none">ไม่มีอาการ</option>
+            <option value="rarely">นานๆ ครั้ง</option>
+            <option value="sometimes">2-3 วันต่อสัปดาห์</option>
+            <option value="often">เกือบทุกวัน (เรื้อรัง)</option>
+            <option value="severe">รุนแรงจนรบกวนการกินอาหาร</option>
+          </select>
+        </div>
+      </div>
+
+      <h3 style="color: var(--primary);" class="full-width">ข้อมูลสุขภาพและข้อจำกัดส่วนบุคคล</h3>
+
+      <div class="form-group full-width">
+        <label style="display: block; font-weight: bold; margin-bottom: 10px;">กลุ่มอาหารที่แพ้</label>
+
+        <div class="checkbox-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; background: #f9f9f9; padding: 15px; border-radius: 10px; border: 1px solid #eee;">
+          <label style="display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer;">
+            <input type="checkbox" name="allergy" value="นมวัว" style="width: 16px; height: 16px;"> นมวัว
+          </label>
+          <label style="display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer;">
+            <input type="checkbox" name="allergy" value="ถั่วเหลือง" style="width: 16px; height: 16px;"> ถั่วเหลือง
+          </label>
+          <label style="display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer;">
+            <input type="checkbox" name="allergy" value="ไข่" style="width: 16px; height: 16px;"> ไข่
+          </label>
+          <label style="display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer;">
+            <input type="checkbox" name="allergy" value="แป้งสาลี" style="width: 16px; height: 16px;"> แป้งสาลี
+          </label>
+          <label style="display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer;">
+            <input type="checkbox" name="allergy" value="ถั่วลิสง" style="width: 16px; height: 16px;"> ถั่วลิสง
+          </label>
+          <label style="display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer;">
+            <input type="checkbox" name="allergy" value="ถั่วเปลือกแข็ง" style="width: 16px; height: 16px;"> ถั่วเปลือกแข็ง
+          </label>
+          <label style="display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer;">
+            <input type="checkbox" name="allergy" value="อาหารทะเล" style="width: 16px; height: 16px;"> ทะเล
+          </label>
+          <label style="display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer;">
+            <input type="checkbox" name="allergy" value="ปลา" style="width: 16px; height: 16px;"> ปลา
+          </label>
+          <label style="display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer;">
+            <input type="checkbox" name="allergy" value="งา" style="width: 16px; height: 16px;"> งา
+          </label>
+
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; grid-column: span 2;">
+          <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; margin: 0;">
+            <input type="checkbox" name="allergy" value="อื่นๆ" style="width: 16px; height: 16px; flex-shrink: 0;" onchange="toggleOtherAllergy()"> <span style="white-space: nowrap;">อื่น ๆ:</span>
+          </label>
+            <input type="text" id="allergyOtherDetail" style="width: 100%; border: none; border-bottom: 1px solid #ccc; border-radius: 0; background: transparent; padding: 2px 5px; height: auto; outline: none; font-size: 14px; box-shadow: none;" placeholder="ระบุเพิ่มเติม..." disabled>
+        </div>
+        </div>
+
+        <div id="allergyDetailContainer" class="form-group" style="margin-top: 15px; display: none;">
+          <label for="allergyDetail" style="display: block; font-weight: bold; margin-bottom: 8px;">อาการที่แสดงเมื่อแพ้ (ถ้ามี)</label>
+          <textarea id="allergyDetail" rows="2" style="width: 100%; border-radius: 10px; border: 1px solid #ddd; padding: 10px; font-family: 'Sarabun', sans-serif; box-sizing: border-box; resize: none;" placeholder="ระบุอาการแพ้ที่สำคัญ..."></textarea>
+        </div>
+      </div>
+
+      <div class="form-group full-width">
+        <label style="display: block; font-weight: bold; margin-bottom: 15px; font-size: 16px;">รูปแบบอาหารเฉพาะ</label>
+
+        <div class="checkbox-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; background: #f9f9f9; padding: 20px; border-radius: 12px; border: 1px solid #eee; align-items: start;">
+
+          <label style="display: flex; align-items: flex-start; font-size: 14px; cursor: pointer;">
+            <input type="checkbox" name="special" value="Halal" style="width: 16px; height: 16px; margin-top: 3px; margin-right: 8px;">
+            <span>Halal</span>
+            <span class="info-icon" style="color: #3498db; cursor: help; margin-left: 5px;" data-tip="อาหารฮาลาล คืออาหารที่อนุมัติตามหลักศาสนาอิสลาม&#10;• งดสัตว์ต้องห้าม: หมู สุนัข สัตว์กินเนื้อ/ล่าเหยื่อ สัตว์มีพิษ สัตว์ครึ่งบกครึ่งน้ำ และแมลงหรือสัตว์ที่น่ารังเกียจ&#10;• งดซากสัตว์: สัตว์ที่ตายเอง หรือตายจากการถูกทรมาน/อุบัติเหตุ&#10;• ต้องเชือดให้ถูกต้อง: ต้องเชือดตามหลักศาสนาเท่านั้น และห้ามบริโภคสัตว์ที่ถูกเชือดเพื่อบูชาสิ่งอื่นที่นอกเหนือจากพระผู้อภิบาล">ⓘ</span>
+          </label>
+
+          <label style="display: flex; align-items: flex-start; font-size: 14px; cursor: pointer;">
+            <input type="checkbox" name="special" value="เจ" style="width: 16px; height: 16px; margin-top: 3px; margin-right: 8px;">
+            <span>เจ</span>
+            <span class="info-icon" style="color: #3498db; cursor: help; margin-left: 5px;" data-tip=" การถือศีลไม่กินเนื้อสัตว์ หรือสิ่งใดที่มาจากสัตว์ และไม่กินผักที่มีกลิ่นฉุนทั้ง 5 ชนิด ได้แก่ กระเทียม หัวหอม กุยช่าย หลักเกียว (คล้ายกระเทียม แต่ต้นเล็กกว่า) และผักชีทำเพียงระยะเวลาสั้นๆ ">ⓘ</span>
+          </label>
+
+          <label style="display: flex; align-items: flex-start; font-size: 14px; cursor: pointer;">
+            <input type="checkbox" name="special" value="Kosher" style="width: 16px; height: 16px; margin-top: 3px; margin-right: 8px;">
+            <span>Kosher</span>
+            <span class="info-icon" style="color: #3498db; cursor: help; margin-left: 5px;" data-tip=" อาหารที่ได้รับการอนุมัติ จัดเตรียม และปรุงตามหลักศาสนบัญญัติของ ศาสนายิว (Judaism)&#10;•สัตว์ที่ทานได้: สัตว์บกต้องเคี้ยวเอื้องและมีกีบเท้าคู่ (เช่น วัว แกะ) / ปลาต้องมีครีบและเกล็ด / สัตว์ปีกต้องไม่ใช่สายพันธุ์ล่าเหยื่อ&#10;•สัตว์ห้ามทาน: หมู นกล่าเหยื่อ สัตว์เลื้อยคลาน แมลง และ สัตว์ทะเลมีเปลือก/ไร้เกล็ดทั้งหมด (เช่น กุ้ง หอย ปู หมึก)&#10;•การเตรียมเนื้อ: ต้องเชือดโดยผู้เชี่ยวชาญทางศาสนาเพื่อไม่ให้สัตว์ทรมาน และต้องรีดเลือดออกให้หมดก่อนนำมาทำอาหาร&#10;•กฎการแยกเนื้อและนม: ห้ามทานหรือปรุง เนื้อสัตว์ผสมกับนมเด็ดขาด (รวมถึงต้องแยกเครื่องครัวและภาชนะออกจากกันอย่างชัดเจน)&#10;•อาหารกลุ่มเป็นกลาง (Pareve): พวกผัก ผลไม้ ธัญพืช และไข่ สามารถเลือกทานคู่กับเนื้อสัตว์หรือนมก็ได้">ⓘ</span>
+          </label>
+
+          <label style="display: flex; align-items: flex-start; font-size: 14px; cursor: pointer;">
+            <input type="checkbox" name="special" value="Vegan" style="width: 16px; height: 16px; margin-top: 3px; margin-right: 8px;">
+            <span>Vegan</span>
+            <span class="info-icon" style="color: #3498db; cursor: help; margin-left: 5px;" data-tip="กลุ่มมังสวิรัติที่เคร่งครัดที่สุด โดยรับประทานเฉพาะอาหารจากพืช 100% งดเนื้อสัตว์และผลิตภัณฑ์ที่มาจากสัตว์ทุกชนิด (เช่น นม ไข่ น้ำผึ้ง) นอกจากนี้ยังครอบคลุมไปถึงวิถีชีวิต โดยจะงดใช้เครื่องอุปโภคที่ทำจากสัตว์หรือทดลองในสัตว์ และไม่สนับสนุนกิจกรรมที่เบียดเบียนสัตว์ในทุกรูปแบบ">ⓘ</span>
+          </label>
+
+          <label style="display: flex; align-items: flex-start; font-size: 14px; cursor: pointer;">
+            <input type="checkbox" name="special" value="Pescatarian" style="width: 16px; height: 16px; margin-top: 3px; margin-right: 8px;">
+            <span>Pescatarian</span>
+            <span class="info-icon" style="color: #3498db; cursor: help; margin-left: 5px;" data-tip="กลุ่มนี้สามารถทานปลาและหอยได้ ในบางรายอาจทานนมหรือไข่เสริมด้วยก็ได้ แต่ไม่ทานเนื้อสัตว์อื่นๆ เช่น เนื้อหมู เนื้อไก่ เนื้อวัว">ⓘ</span>
+          </label>
+
+          <label style="display: flex; align-items: flex-start; font-size: 14px; cursor: pointer;">
+            <input type="checkbox" name="special" value="Lacto-ovo vegetarian" style="width: 16px; height: 16px; margin-top: 3px; margin-right: 8px; flex-shrink: 0;">
+            <span>
+              Lacto-ovo vegetarian
+              <span class="info-icon" style="color: #3498db; cursor: help; margin-left: 5px; font-weight: bold;" data-tip="สามารถทานทั้งนมและไข่ได้ แต่งดเนื้อสัตว์ทุกประเภท">ⓘ</span>
+            </span>
+          </label>
+
+          <label style="display: flex; align-items: flex-start; font-size: 14px; cursor: pointer;">
+            <input type="checkbox" name="special" value="Lacto vegetarian" style="width: 16px; height: 16px; margin-top: 3px; margin-right: 8px; flex-shrink: 0;">
+            <span>
+              Lacto vegetarian
+              <span class="info-icon" style="color: #3498db; cursor: help; margin-left: 5px;" data-tip="สามารถทานผลิตภัณฑ์ที่ทำจากนมได้ เช่น นม ชีส โยเกิร์ต เนย แต่งดเนื้อสัตว์และผลิตภัณฑ์จากไข่ทุกประเภท">ⓘ</span>
+            </span>
+          </label>
+
+          <label style="display: flex; align-items: flex-start; font-size: 14px; cursor: pointer;">
+            <input type="checkbox" name="special" value="Ovo vegetarian" style="width: 16px; height: 16px; margin-top: 3px; margin-right: 8px;">
+            <span>Ovo vegetarian</span>
+            <span class="info-icon" style="color: #3498db; cursor: help; margin-left: 5px;" data-tip="สามารถทานไข่ได้ แต่งดเนื้อสัตว์และผลิตภัณฑ์จากนมทุกประเภท">ⓘ</span>
+          </label>
+
+          <label style="display: flex; align-items: flex-start; font-size: 14px; cursor: pointer;">
+            <input type="checkbox" name="special" value="Pollotarian" style="width: 16px; height: 16px; margin-top: 3px; margin-right: 8px;">
+            <span>Pollotarian</span>
+            <span class="info-icon" style="color: #3498db; cursor: help; margin-left: 5px;" data-tip="สามารถทานปลา ไก่ ไข่ และผลิตภัณฑ์จากนมทุกประเภท แต่งดเนื้อสัตว์ใหญ่หรือเนื้อแดง เช่น เนื้อหมู เนื้อวัว">ⓘ</span>
+          </label>
+
+          <label style="display: flex; align-items: flex-start; font-size: 14px; cursor: pointer;">
+            <input type="checkbox" name="special" value="Flexitarian" style="width: 16px; height: 16px; margin-top: 3px; margin-right: 8px;">
+            <span>Flexitarian</span>
+            <span class="info-icon" style="color: #3498db; cursor: help; margin-left: 5px;" data-tip="คนที่ทานมังสวิรัติอาทิตย์ละ 2-3 ครั้ง กลุ่มนี้ยังทานเนื้อสัตว์เล็กอยู่ เพียงแค่ทานในปริมาณที่น้อยลง ร่วมกับการลดปริมาณน้ำตาลในมื้ออาหาร และจำกัดของหวาน เน้นทานอาหารจากพืชเช่นเดียวกับมังสวิรัติกลุ่มอื่นๆ">ⓘ</span>
+          </label>
+
+          <label style="display: flex; align-items: flex-start; font-size: 14px; cursor: pointer;">
+            <input type="checkbox" name="special" value="Ketogenic" style="width: 16px; height: 16px; margin-top: 3px; margin-right: 8px;">
+            <span>Ketogenic</span>
+            <span class="info-icon" style="color: #3498db; cursor: help; margin-left: 5px;" data-tip="แนวทางการทานอาหารที่เน้นการทานไขมันชนิดดีเพิ่มขึ้นเป็นหลัก โดยมีสัดส่วนของคาร์โบไฮเดตที่น้อยลงและโปรตีนในปริมาณปานกลาง">ⓘ</span>
+          </label>
+
+          <label style="display: flex; align-items: flex-start; font-size: 14px; cursor: pointer;">
+            <input type="checkbox" name="special" value="Paleo" style="width: 16px; height: 16px; margin-top: 3px; margin-right: 8px;">
+            <span>Paleo</span>
+            <span class="info-icon" style="color: #3498db; cursor: help; margin-left: 5px;" data-tip="รูปแบบการกินที่เลียนแบบมนุษย์ยุคถ้ำ โดยเน้นอาหารจากธรรมชาติที่ไม่ผ่านการแปรรูปและปรุงแต่ง เช่น เนื้อสัตว์ ปลา ถั่ว ผัก และผลไม้ (คล้ายการกินคลีน) เพื่อหลีกเลี่ยงอาหารในยุคอุตสาหกรรมปัจจุบันที่มีทั้งการแปรรูป สารปรุงแต่ง และสารเคมีตกค้าง">ⓘ</span>
+          </label>
+
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; grid-column: 1 / -1;">
+          <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; margin: 0;">
+            <input type="checkbox" name="special" value="อื่นๆ" style="width: 16px; height: 16px; flex-shrink: 0;" onchange="toggleOtherSpecial()"> <span style="white-space: nowrap;">อื่น ๆ:</span>
+          </label>
+            <input type="text" id="sprcialOtherDetail" style="width: 100%; border: none; border-bottom: 1px solid #ccc; border-radius: 0; background: transparent; padding: 2px 5px; height: auto; outline: none; font-size: 14px; box-shadow: none;" placeholder="ระบุเพิ่มเติม..." disabled>
+        </div>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>พฤติกรรมการสูบบุหรี่</label>
+          <select name="smoking_habit">
+            <option value="none">ไม่สูบ</option>
+            <option value="occasional">สูบเป็นครั้งคราว (&lt; 3 วันต่อสัปดาห์)</option>
+            <option value="regular">สูบเป็นประจำ (&le; 3 วันต่อสัปดาห์)</option>
+          </select> 
+        </div>
+
+        <div class="form-group">
+          <label>พฤติกรรมการดื่มแอลกอฮอล์</label>
+          <select name="alcohol_habit">
+            <option value="none">ไม่ดื่ม</option>
+            <option value="occasional">ดื่มเป็นครั้งคราว (&lt; 3 วันต่อสัปดาห์)</option>
+            <option value="regular">ดื่มเป็นประจำ (&le; 3 วันต่อสัปดาห์)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group full-width">
+        <label for="Medicine" style="display: block; font-weight: bold; margin-bottom: 8px;">ยา หรืออาหารเสริมที่ทานประจำ</label>
+        <textarea id="Medicine" rows="2" style="width: 100%; border-radius: 10px; border: 1px solid #ddd; padding: 10px; font-family: 'Sarabun', sans-serif; box-sizing: border-box; resize: vertical;" placeholder="ระบุชื่อยา/อาหารเสริม..."></textarea>
+      </div>
+
+      <div class="form-group" style="margin-top: 15px;">
+        <label for="note" style="display: block; font-weight: bold; margin-bottom: 8px;">บันทึกเพิ่มเติม</label>
+        <textarea id="note" rows="6" style="width: 100%; border-radius: 10px; border: 1px solid #ddd; padding: 10px; font-family: 'Sarabun', sans-serif; box-sizing: border-box; resize: none;" placeholder="เช่น ข้อมูลแวดล้อมและวิถีชีวิตที่อาจส่งผลต่อพฤติกรรมการบริโภคและการเข้าถึงอาหาร พฤติกรรมการใช้ชีวิต ประวัติการควบคุมน้ำหนัก การใช้ยาสมุนไพรหรือยาแผนโบราณ ระดับความพร้อมและทัศนคติในการปรับเปลี่ยนพฤติกรรม....."></textarea>
+      </div>
+
+      <button type="button" class="btn-primary" onclick="goToPage2()">ต่อไป</button>
+    </div>
+
+    <!-- ================= หน้าที่ 2 ================= -->
+    <div id="p2" class="page">
+      <h3 style="margin-top:0; color: var(--primary);">2/3 การคำนวณพลังงานและสารอาหาร</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>สูตรคำนวณพลังงาน (Energy Equation) <span style="color:red;">*</span></label>
+          <select id="energyFormula" onchange="toggleQuickMethod()" required>
+            <option value="">-- เลือกสูตรคำนวณ --</option>
+            <option value="quick">Quick Method (kcal/kg/day)</option>
+            <option value="harris">Harris-Benedict Equation</option>
+            <option value="mifflin">Mifflin-St Jeor Equation</option>
+          </select>
+        </div>
+
+        <div id="quickMethod-section" class="form-group" style="display: none; border-left: 5px solid #F7931E; padding-left: 15px;">
+          <label style="color: #F7931E; margin-bottom: 8px;">ระบุพลังงาน (kcal/kg/day)</label>
+          <input type="number" id="quickMethodValue" step="1" inputmode="numeric" placeholder="เช่น 25, 30, 35">
+          <div id="energyRecommendation" style="font-size: 13px; color: var(--orange); margin-top: 8px; font-weight: bold;"></div>
+        </div>
+
+        <div class="form-group">
+          <label>น้ำหนักที่ใช้ในการคำนวณ <span style="color:red;">*</span></label>
+          <select id="weightToUse" required>
+            <option value="">-- เลือกน้ำหนัก --</option>
+            <option value="abw">น้ำหนักจริง (Actual Body Weight - ABW)</option>
+            <option value="ibw">น้ำหนักอุดมคติ (Ideal Body Weight - IBW)</option>
+            <option value="adjbw">น้ำหนักปรับแก้ (Adjusted Body Weight - AdjBW)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group full-width" style="margin-top: 25px;">
+        <label style="display: block; font-weight: bold; margin-bottom: 10px;">เป้าหมายน้ำหนัก</label>
+        <div class="checkbox-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; background: #f9f9f9; padding: 15px; border-radius: 10px; border: 1px solid #eee;">
+          <label style="display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer;">
+            <input type="radio" name="weightGoal" value="reduce" style="width: 16px; height: 16px;" onchange="toggleWeightGoalOptions()"> ลดน้ำหนัก
+          </label>
+          <label style="display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer;">
+            <input type="radio" name="weightGoal" value="maintain" style="width: 16px; height: 16px;" onchange="toggleWeightGoalOptions()" checked> คงน้ำหนัก
+          </label>
+          <label style="display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer;">
+            <input type="radio" name="weightGoal" value="increase" style="width: 16px; height: 16px;" onchange="toggleWeightGoalOptions()"> เพิ่มน้ำหนัก
+          </label>
+        </div>
+      </div>
+
+      <div id="reduceKcal-section" class="form-group" style="display: none; border-left: 5px solid #e67e22; padding-left: 15px;">
+        <label style="color: #e67e22; margin-bottom: 8px;">ต้องการลดพลังงาน (kcal/วัน)</label>
+        <input type="number" id="reduceKcalValue" step="50" inputmode="numeric" placeholder="เช่น 300, 500">
+      </div>
+
+      <div id="increaseKcal-section" class="form-group" style="display: none; border-left: 5px solid #27ae60; padding-left: 15px;">
+        <label style="color: #27ae60; margin-bottom: 8px;">ต้องการเพิ่มพลังงาน (kcal/วัน)</label>
+        <input type="number" id="increaseKcalValue" step="50" inputmode="numeric" placeholder="เช่น 300, 500">
+      </div>
+
+      <h3 style="color: var(--primary); margin-top: 25px;" class="full-width">สัดส่วนพลังงาน (Macronutrient Distribution)</h3>
+      
+      <div class="form-grid">
+        <div class="form-group">
+          <label>คาร์โบไฮเดรต (Carbohydrate) %</label>
+          <input type="number" id="carbPercent" step="1" oninput="checkPercentage()" placeholder="เช่น 50">
+        </div>
+        
+        <div class="form-group">
+          <label>ไขมัน (Fat) %</label>
+          <input type="number" id="fatPercent" step="1" oninput="checkPercentage()" placeholder="เช่น 30">
+        </div>
+
+        <div class="form-group">
+          <label>รูปแบบการคำนวณโปรตีน (Protein)</label>
+          <select id="proteinCalcMethod" onchange="toggleProteinMethod()">
+            <option value="factor">คิดตามน้ำหนักตัว (Factor g/kg)</option>
+            <option value="percent">คิดเป็นเปอร์เซ็นต์ (%)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <div id="proteinFactor-section" style="border-left: 5px solid #86C140; padding-left: 15px;">
+            <label style="color: #86C140; margin-bottom: 8px;">โปรตีน Factor (g/kg)</label>
+            <input type="number" id="proteinFactor" step="0.1" inputmode="decimal" placeholder="เช่น 1.2, 1.5">
+            <div id="proteinRecommendation" style="font-size: 13px; color: var(--orange); margin-top: 8px; font-weight: bold;"></div>
+          </div>
+
+          <div id="proteinPercent-section" style="display: none; border-left: 5px solid #2ecc71; padding-left: 15px;">
+            <label style="color: #86C140; margin-bottom: 8px;">โปรตีน (Protein) %</label>
+            <input type="number" id="proteinPercent" step="1" oninput="checkPercentage()" placeholder="เช่น 20">
+          </div>
+        </div>
+      </div>
+
+      <div id="percentWarning" class="full-width" style="color: #e74c3c; font-size: 14px; font-weight: bold; margin-bottom: 15px; display: none; background: #fdf5f5; padding: 10px; border-radius: 8px; border: 1px solid #fadbd8;">
+        ⚠️ คำเตือน: สัดส่วนพลังงานรวมยังไม่เท่ากับ 100% (ปัจจุบัน: <span id="totalPercentShow">0</span>%)
+      </div>
+
+      <div class="action-buttons-container">
+        <button type="button" class="btn-primary" style="background: #95a5a6; margin-top: 0;" onclick="goToPage1()">ย้อนกลับ</button>
+        <button type="button" class="btn-primary" style="margin-top: 0;" onclick="goToPage3()">สรุปผล</button>
+      </div>
+    </div> <!-- สิ้นสุด div ของหน้าที่ 2 (p2) -->
+
+    <!-- ================= หน้าที่ 3 ================= -->
+    <div id="p3" class="page">
+      <h3 style="margin-top:0; color: var(--primary);">3/3 สรุปผลและคำนวณโภชนาการ</h3>
+      
+      <div id="exportArea" class="export-area">
+        <div id="summaryGeneral"></div>
+        <div id="summaryCalc" style="margin-top: 40px;"></div>
+      </div>
+
+      <div class="action-buttons-container">
+        <button type="button" class="btn-primary" style="background: #95a5a6; margin-top: 0;" onclick="goToPage2From3()">ย้อนกลับ</button>
+        <button type="button" id="btnSaveImg" class="btn-primary" style="background: #27ae60; margin-top: 0;" onclick="saveAsImage()">บันทึกเป็นรูปภาพ</button>
+        <button type="button" class="btn-primary" style="background: var(--orange); margin-top: 0;" onclick="window.location.href='food-exchange.html?load=true'">จัดอาหาร (Food Exchange) ➔</button>
+      </div>
+    </div> <!-- สิ้นสุด div ของหน้าที่ 3 (p3) -->
+  </form>
+  </div>
+</div>
+
+
+<!-- เครื่องคิดเลขลอย -->
+<div class="calc-trigger" onclick="toggleCalc()">🖩</div>
+<div id="miniCalc" class="calc-container">
+  <input type="text" id="calcDisplay" class="calc-display" readonly value="">
+  <div class="calc-buttons">
+    <button type="button" class="calc-btn top" onclick="clearCalc()">AC</button>
+    <button type="button" class="calc-btn top" onclick="backspaceCalc()">⌫</button>
+    <button type="button" class="calc-btn top" onclick="percentCalc()">%</button>
+    <button type="button" class="calc-btn op" onclick="pressCalc('/')">÷</button>
+    
+    <button type="button" class="calc-btn num" onclick="pressCalc('7')">7</button>
+    <button type="button" class="calc-btn num" onclick="pressCalc('8')">8</button>
+    <button type="button" class="calc-btn num" onclick="pressCalc('9')">9</button>
+    <button type="button" class="calc-btn op" onclick="pressCalc('*')">×</button>
+    
+    <button type="button" class="calc-btn num" onclick="pressCalc('4')">4</button>
+    <button type="button" class="calc-btn num" onclick="pressCalc('5')">5</button>
+    <button type="button" class="calc-btn num" onclick="pressCalc('6')">6</button>
+    <button type="button" class="calc-btn op" onclick="pressCalc('-')">−</button>
+    
+    <button type="button" class="calc-btn num" onclick="pressCalc('1')">1</button>
+    <button type="button" class="calc-btn num" onclick="pressCalc('2')">2</button>
+    <button type="button" class="calc-btn num" onclick="pressCalc('3')">3</button>
+    <button type="button" class="calc-btn op" onclick="pressCalc('+')">+</button>
+    
+    <button type="button" class="calc-btn num zero" onclick="pressCalc('0')">0</button>
+    <button type="button" class="calc-btn num" onclick="pressCalc('.')">.</button>
+    <button type="button" class="calc-btn op" onclick="solveCalc()">=</button>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // ตรวจสอบว่ามีการติ๊กเลือกกลุ่มอาหารที่แพ้อย่างน้อย 1 รายการหรือไม่
+    const allergyCheckboxes = document.querySelectorAll('input[name="allergy"]');
+    allergyCheckboxes.forEach(cb => {
+      cb.addEventListener('change', function() {
+        const anyChecked = document.querySelector('input[name="allergy"]:checked');
+        document.getElementById('allergyDetailContainer').style.display = anyChecked ? 'block' : 'none';
+      });
+    });
+  });
+
+  function toggleOtherDisease() {
+    const checkbox = document.querySelector('input[name="disease"][value="อื่นๆ"]');
+    const otherInput = document.getElementById('otherDisease');
+    if (checkbox && checkbox.checked) {
+        otherInput.disabled = false;
+        otherInput.focus();
+    } else {
+        otherInput.disabled = true;
+        otherInput.value = '';
+    }
+  }
+
+  function toggleOtherAllergy() {
+    const checkbox = document.querySelector('input[name="allergy"][value="อื่นๆ"]');
+    const otherInput = document.getElementById('allergyOtherDetail');
+    if (checkbox && checkbox.checked) {
+        otherInput.disabled = false;
+        otherInput.focus();
+    } else {
+        otherInput.disabled = true;
+        otherInput.value = '';
+    }
+  }
+
+  function toggleOtherSpecial() {
+    const checkbox = document.querySelector('input[name="special"][value="อื่นๆ"]');
+    const otherInput = document.getElementById('sprcialOtherDetail');
+    if (checkbox && checkbox.checked) {
+        otherInput.disabled = false;
+        otherInput.focus();
+    } else {
+        otherInput.disabled = true;
+        otherInput.value = '';
+    }
+  }
+
+  function toggleOtherGiSymptom() {
+    const gi = document.getElementById('giSymptom').value;
+    document.getElementById('othergiSymptom').classList.toggle('hidden', gi !== 'Other');
+  }
+
+  function toggleCalc() {
+    const calc = document.getElementById('miniCalc');
+    if (calc.style.display === 'none' || calc.style.display === '') {
+      calc.style.display = 'block';
+    } else {
+      calc.style.display = 'none';
+    }
+  }
+
+  // ================= ฟังก์ชันสำหรับหน้าที่ 2 =================
+  
+  function goToPage2() {
+    // ตรวจสอบ���่ากรอกข้อมูลช่องที่จำเป็น (มี *) ครบหรือยังในหน้าแรก
+    const p1Inputs = document.querySelectorAll('#p1 [required]');
+    for (let input of p1Inputs) {
+      if (!input.checkValidity()) {
+        input.reportValidity(); // แสดงข้อความแจ้งเตือนของเบราว์เซอร์
+        return; // หยุดการทำงาน ไม่ให้เปลี่ยนหน้า
+      }
+    }
+
+    document.getElementById('p1').classList.remove('active');
+    document.getElementById('p2').classList.add('active');
+    document.getElementById('prog').style.width = '66%'; // ขยับหลอด Progress bar
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // เลื่อนหน้าจอกลับไปบนสุดอย่างนุ่มนวล
+
+    // ================= ส่วนที่ใช้เพิ่มคำแนะนำโปรตีนและพลังงานตามโรค =================
+    const selectedDiseases = Array.from(document.querySelectorAll('input[name="disease"]:checked')).map(cb => cb.value);
+
+    const proInput = document.getElementById('proteinFactor');
+    const proRecText = document.getElementById('proteinRecommendation');
+    const quickMethodInput = document.getElementById('quickMethodValue');
+    const energyRecText = document.getElementById('energyRecommendation');
+
+    // --- ตั้งค่าเริ่มต้น ---
+    proRecText.innerHTML = '';
+    proInput.placeholder = 'เช่น 1.2, 1.5';
+    energyRecText.innerHTML = '';
+    quickMethodInput.placeholder = 'เช่น 25, 30, 35';
+    let recommendationSet = false;
+
+    // --- ตรวจสอบตามลำดับความสำคัญ ---
+
+    // 1. โรคไตเรื้อรัง (CKD)
+    if (selectedDiseases.includes('โรคไตเรื้อรัง (CKD)')) {
+        const dmChecked = selectedDiseases.includes('โรคเบาหวาน');
+        if (dmChecked) {
+            proInput.placeholder = '0.6 - 0.8';
+            proRecText.innerHTML = '💡 คำแนะนำสำหรับผู้ป่วยเบาหวานร่วมกับโรคไต (CKD): โปรตีน <strong>0.6 - 0.8 g/kg</strong> (KDOQI 2020)';
+        } else {
+            proInput.placeholder = '0.6 - 1.2';
+            proRecText.innerHTML = '💡 <strong>ผู้ป่วยไต (CKD):</strong><br>• ระยะ 3-5 (ไม่ฟอก): <strong>0.55-0.6 g/kg</strong><br>• ฟอกเลือด (HD/PD): <strong>1.0-1.2 g/kg</strong><br>(KDOQI 2020)';
+        }
+        quickMethodInput.placeholder = '25 - 35';
+        energyRecText.innerHTML = '💡 คำแนะนำสำหรับผู้ป่วยโรคไต (CKD): พลังงาน <strong>25 - 35 kcal/kg</strong> (KDOQI 2020)';
+        recommendationSet = true;
+    }
+
+    // 2. โรคมะเร็ง / ตับแข็ง (ตับแข็งไม่มี checkbox, ใช้แค่ 'โรคมะเร็ง')
+    if (!recommendationSet && selectedDiseases.includes('โรคมะเร็ง')) {
+        proInput.placeholder = '1.2 - 1.5';
+        proRecText.innerHTML = '💡 คำแนะนำสำหรับผู้ป่วยมะเร็ง: โปรตีน <strong>1.0 - 1.5 g/kg</strong> (อาจสูงถึง 2.0 หากสูญเสียกล้ามเนื้อรุนแรง) (ESPEN 2021)';
+        quickMethodInput.placeholder = '25 - 35';
+        energyRecText.innerHTML = '💡 คำแนะนำสำหรับผู้ป่วยมะเร็ง: พลังงาน <strong>25 - 30 kcal/kg</strong> (อาจเพิ่มเป็น 30-35 หากเผาผลาญสูง/น้ำหนักลดมาก) (ESPEN 2021)';
+        recommendationSet = true;
+    }
+
+    // 3. โรคเบาหวาน
+    if (!recommendationSet && selectedDiseases.includes('โรคเบาหวาน')) {
+        proInput.placeholder = '1.0 - 1.5';
+        proRecText.innerHTML = '💡 คำแนะนำสำหรับผู้ป่วยเบาหวาน: โปรตีน <strong>1.0 - 1.5 g/kg</strong> (ADA 2024)';
+        quickMethodInput.placeholder = '25 - 30';
+        energyRecText.innerHTML = '💡 คำแนะนำสำหรับผู้ป่วยเบาหวาน: พลังงาน <strong>25 - 30 kcal/kg</strong> (ADA 2024)';
+        recommendationSet = true;
+    }
+
+    // 4. โรคหัวใจ / ความดันโลหิตสูง
+    if (!recommendationSet && selectedDiseases.includes('โรคหัวใจ')) {
+        proInput.placeholder = '1.0 - 1.2';
+        proRecText.innerHTML = '💡 คำแนะนำสำหรับผู้ป่วยโรคหัวใจ: โปรตีน <strong>1.0 - 1.2 g/kg</strong> (อาจเพิ่มขึ้นหากมีภาวะ Cachexia) (ESPEN 2015/2020)';
+        quickMethodInput.placeholder = '25 - 30';
+        energyRecText.innerHTML = '💡 <strong>ผู้ป่วยโรคหัวใจ:</strong><br>• ปกติ: <strong>25-30 kcal/kg</strong><br>• ลดน้ำหนัก: <strong>20-24 kcal/kg</strong><br>• ผอมแห้ง (Cachexia): <strong>31-35 kcal/kg</strong><br>(ESPEN 2015/2020)';
+        recommendationSet = true;
+    }
+    if (!recommendationSet && selectedDiseases.includes('โรคความดันโลหิตสูง')) {
+        proInput.placeholder = '0.8 - 1.0';
+        proRecText.innerHTML = '💡 คำแนะนำสำหรับผู้ป่วยความดันโลหิตสูง: โปรตีน <strong>0.8 - 1.0 g/kg</strong> (เน้นโซเดียม &lt; 2,000 mg/day) (ACC/AHA)';
+        quickMethodInput.placeholder = '25 - 30';
+        energyRecText.innerHTML = '💡 คำแนะนำสำหรับผู้ป่วยความดันโลหิตสูง: พลังงาน <strong>25 - 30 kcal/kg</strong> (ปรับลดหากอ้วน) (ACC/AHA)';
+        recommendationSet = true;
+    }
+
+    // 5. ไขมันพอกตับ / ไขมันในเลือดสูง / เก๊าท์
+    if (!recommendationSet && selectedDiseases.includes('โรคตับ/ไขมันพอกตับ')) {
+        proInput.placeholder = '0.8 - 1.2';
+        proRecText.innerHTML = '💡 คำแนะนำสำหรับผู้ป่วยไขมันพอกตับ: โปรตีน <strong>0.8 - 1.2 g/kg</strong> (EASL 2019)';
+        quickMethodInput.placeholder = '25 - 30';
+        energyRecText.innerHTML = '💡 คำแนะนำสำหรับผู้ป่วยไขมันพอกตับ: พลังงาน <strong>25 - 30 kcal/kg</strong> (EASL 2019)';
+        recommendationSet = true;
+    }
+    if (!recommendationSet && selectedDiseases.includes('โรคไขมันในเลือดสูง')) {
+        proInput.placeholder = '0.8 - 1.0';
+        proRecText.innerHTML = '💡 คำแนะนำสำหรับผู้ป่วยไขมันในเลือดสูง: โปรตีน <strong>0.8 - 1.0 g/kg</strong> (ESC/EAS)';
+        quickMethodInput.placeholder = '25 - 30';
+        energyRecText.innerHTML = '💡 คำแนะนำสำหรับผู้ป่วยไขมันในเลือดสูง: พลังงาน <strong>25 - 30 kcal/kg</strong> (ปรับลดหากอ้วน) (ESC/EAS)';
+        recommendationSet = true;
+    }
+    if (!recommendationSet && selectedDiseases.includes('โรคเก๊าท์')) {
+        proInput.placeholder = '0.8 - 1.0';
+        proRecText.innerHTML = '💡 คำแนะนำสำหรับผู้ป่วยเก๊าท์: โปรตีน <strong>0.8 - 1.0 g/kg</strong> (ACR 2020)';
+        quickMethodInput.placeholder = '25 - 30';
+        energyRecText.innerHTML = '💡 คำแนะนำสำหรับผู้ป่วยเก๊าท์: พลังงาน <strong>25 - 30 kcal/kg</strong> (ปรับลดหากอ้วน) (ACR 2020)';
+        recommendationSet = true;
+    }
+  }
+
+  function goToPage1() {
+    document.getElementById('p2').classList.remove('active');
+    document.getElementById('p1').classList.add('active');
+    document.getElementById('prog').style.width = '33%';
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // เลื่อนหน้าจอกลับไปบนสุดอย่างนุ่มนวล
+  }
+
+  function goToPage3() {
+    // ตรวจสอบว่ากรอกข้อมูลช่องที่จำเป็นของหน้า 2 ครบหรือยัง
+    const p2Inputs = document.querySelectorAll('#p2 [required]');
+    for (let input of p2Inputs) {
+      if (!input.checkValidity()) {
+        input.reportValidity();
+        return;
+      }
+    }
+
+    document.getElementById('p2').classList.remove('active');
+    document.getElementById('p3').classList.add('active');
+    document.getElementById('prog').style.width = '100%'; 
+    window.scrollTo({ top: 0, behavior: 'smooth' }); 
+
+    // ================= 1. ดึงข้อมูลทั่วไป =================
+    const name = document.getElementById('userName').value || 'ไม่มี';
+    const gender = document.getElementById('gender').value;
+    const age = parseFloat(document.getElementById('age').value) || 0;
+    const abw = parseFloat(document.getElementById('weight').value) || 0;
+    const ubw = parseFloat(document.getElementById('ubw').value) || abw;
+    const height = parseFloat(document.getElementById('height').value) || 0;
+    const waist = parseFloat(document.getElementById('waist').value) || 0;
+
+    // ดึงข้อมูลสุขภาพ
+    let disArr = [];
+    document.querySelectorAll('input[name="disease"]:checked').forEach(cb => {
+      if (cb.value === 'อื่นๆ') {
+         const otherVal = document.getElementById('otherDisease').value.trim();
+         if (otherVal) disArr.push(otherVal);
+         else disArr.push('อื่นๆ');
+      } else {
+         disArr.push(cb.value);
+      }
+    });
+    let dis = disArr.length > 0 ? disArr.join(', ') : 'ไม่มี';
+
+    const selGi = document.getElementById('giSymptom');
+    let gi = selGi.options[selGi.selectedIndex].text;
+    if (selGi.value === 'Other') {
+        const otherGiValue = document.getElementById('othergiSymptom').value.trim();
+        if (otherGiValue) gi = otherGiValue;
+        else gi = 'อื่นๆ';
+    }
+
+    // กลุ่มอาหารที่แพ้
+    let allg = [];
+    document.querySelectorAll('input[name="allergy"]:checked').forEach(cb => {
+      if (cb.value === 'อื่นๆ') {
+          const otherVal = document.getElementById('allergyOtherDetail').value.trim();
+          if (otherVal) allg.push(otherVal);
+          else allg.push('อื่นๆ');
+      }
+      else allg.push(cb.value);
+    });
+    const allgText = allg.length > 0 ? allg.join(', ') : 'ไม่มี';
+    const allergySymptom = document.getElementById('allergyDetail').value.trim();
+
+    // รูปแบบอาหารเฉพาะ
+    let spec = [];
+    document.querySelectorAll('input[name="special"]:checked').forEach(cb => {
+      if (cb.value === 'อื่นๆ') {
+          const otherVal = document.getElementById('sprcialOtherDetail').value.trim();
+          if (otherVal) spec.push(otherVal);
+          else spec.push('อื่นๆ');
+      }
+      else spec.push(cb.value);
+    });
+    const specText = spec.length > 0 ? spec.join(', ') : 'ไม่มี';
+
+    // พฤติกรรม ยา และบันทึก
+    const smokeSel = document.querySelector('select[name="smoking_habit"]');
+    const smoke = smokeSel.options[smokeSel.selectedIndex].text;
+    const alcSel = document.querySelector('select[name="alcohol_habit"]');
+    const alc = alcSel.options[alcSel.selectedIndex].text;
+    const med = document.getElementById('Medicine').value.trim() || 'ไม่มี';
+    const note = document.getElementById('note').value.trim() || 'ไม่มี';
+
+    let healthInfoHtml = `
+        <div class="box-title" style="color: var(--orange);">🩺 ประวัติสุขภาพ</div>
+        <div class="box-item"><span>โรคประจำตัว:</span> <strong>${dis}</strong></div>
+        <div class="box-item"><span>อาการทางเดินอาหาร:</span> <strong>${gi}</strong></div>
+        <div class="box-item"><span>แพ้อาหาร:</span> <strong>${allgText}</strong></div>
+        ${allergySymptom ? `<div class="box-item"><span>อาการที่แสดง:</span> <strong style="color:#c0392b;">${allergySymptom}</strong></div>` : ''}
+    `;
+
+    let lifestyleHtml = `
+        <div class="box-title" style="color: #86C140;">🌿 พฤติกรรม</div>
+        <div class="box-item"><span>รูปแบบอาหาร:</span> <strong>${specText}</strong></div>
+        <div class="box-item"><span>สูบบุหรี่:</span> <strong>${smoke}</strong></div>
+        <div class="box-item"><span>ดื่มแอลกอฮอล์:</span> <strong>${alc}</strong></div>
+        <div class="box-item"><span>ยาและอาหารเสริม:</span> <strong>${med}</strong></div>
+    `;
+
+    // แทรกข้อมูลลงใน HTML
+    document.getElementById('summaryGeneral').innerHTML = `
+      <div class="report-wrapper">
+        <div class="report-title" style="margin-bottom: 10px;"><span style="font-size: 26px;">📋</span> ข้อมูลทั่วไปและสุขภาพ</div>
+        <p style="color: var(--text-grey); margin-top: 0; margin-bottom: 25px; font-size: 16px;">ตรวจสอบและประเมินภาวะสุขภาพเบื้องต้นของผู้รับคำปรึกษา</p>
+        
+        <div class="info-card" style="margin-top: 15px;">
+            <div class="general-info-layout">
+                <!-- ข้อมูลส่วนตัว -->
+                <div class="summary-box square-box orange-border">
+                    <div class="box-title" style="color: var(--orange);">👤 ข้อมูลส่วนตัว</div>
+                    <div class="box-item"><span>ชื่อ:</span> <strong>${name}</strong></div>
+                    <div class="box-item"><span>เพศ:</span> <strong>${gender}</strong></div>
+                    <div class="box-item"><span>อายุ:</span> <strong>${age} ปี</strong></div>
+                </div>
+
+                <!-- สัดส่วนร่างกาย -->
+                <div class="summary-box square-box green-border">
+                    <div class="box-title" style="color: #86C140;">⚖️ สัดส่วนร่างกาย</div>
+                    <div class="box-item"><span>น้ำหนัก:</span> <strong>${abw} kg</strong></div>
+                    <div class="box-item"><span>ส่วนสูง:</span> <strong>${height} cm</strong></div>
+                    <div class="box-item"><span>เส้นรอบเอว:</span> <strong>${waist > 0 ? waist + ' cm' : '-'}</strong></div>
+                </div>
+
+                <!-- ประวัติสุขภาพ -->
+                <div class="summary-box square-box orange-border full-col-mobile">
+                    ${healthInfoHtml}
+                </div>
+
+                <!-- พฤติกรรม/อื่นๆ -->
+                <div class="summary-box square-box green-border full-col-mobile">
+                    ${lifestyleHtml}
+                </div>
+
+                <!-- คำเตือนเส้นรอบเอว (แยกบรรทัด) -->
+                ${(waist > 0 && waist > (height / 2)) ? `
+                <div class="summary-box warning-box full-col">
+                    ⚠️ <strong>คำเตือน:</strong> เส้นรอบเอวเกินเกณฑ์ มีความเสี่ยงต่อการเกิด โรคอ้วนลงพุง โรคหัวใจ ไขมันในเลือดสูง โรคเบาหวาน โรคความดันโลหิตสูง 
+                </div>` : ''}
+
+                <!-- บันทึกเพิ่มเติม (แยกบรรทัด) -->
+                ${(note && note !== 'ไม่มี') ? `
+                <div class="summary-box note-box full-col">
+                    <span style="color: #d46b08; font-weight: bold; display: block; margin-bottom: 8px;">📝 บันทึกเพิ่มเติม:</span>
+                    <span style="color: #5c5346; white-space: pre-wrap; line-height: 1.5;">${note}</span>
+                </div>` : ''}
+            </div>
+        </div>
+      </div>
+    `;
+
+    // ================= 2. การคำนวณ =================
+    let bmi = height > 0 ? (abw / Math.pow(height / 100, 2)) : 0;
+
+    let bmiMeaning = "";
+    let bmiColor = "";
+    if (bmi > 0) {
+      if (bmi < 18.5) {
+        bmiMeaning = "น้ำหนักน้อยหรือผอม";
+        bmiColor = "#3498db"; // สีฟ้า
+      } else if (bmi <= 22.90) {
+        bmiMeaning = "อยู่ในเกณฑ์ปกติ";
+        bmiColor = "#27ae60"; // สีเขียว
+      } else if (bmi <= 24.90) {
+        bmiMeaning = "น้ำหนักเกิน";
+        bmiColor = "#f39c12"; // สีส้มเหลือง
+      } else if (bmi <= 29.90) {
+        bmiMeaning = "โรคอ้วนระดับที่ 1";
+        bmiColor = "#e67e22"; // สีส้มเข้ม
+      } else {
+        bmiMeaning = "โรคอ้วนระดับที่ 2";
+        bmiColor = "#c0392b"; // สีแดง
+      }
+    }
+    let bmiHtml = bmi > 0 ? `<div style="color: ${bmiColor}; font-size: 15px; font-weight: bold; margin-top: 5px;">${bmiMeaning}</div>` : '';
+    
+    let wtChange = ubw > 0 ? ((abw - ubw) / ubw) * 100 : 0;
+    
+    const wdSel = document.getElementById('weightDuration');
+    const wdText = wdSel.value === 'not_specified' ? 'ไม่ระบุ' : wdSel.options[wdSel.selectedIndex].text;
+
+    let wtChangeText = wtChange === 0 ? "ไม่มีการเปลี่ยนแปลง" : 
+                       (wtChange > 0 ? `<span style="color:#e67e22;">เพิ่มขึ้น ${wtChange.toFixed(2)}%</span><br><span style="font-weight: normal; font-size: 13px; display: inline-block; margin-top: 4px;">(ระยะเวลา: ${wdText})</span>` : `<span style="color:#27ae60;">ลดลง ${Math.abs(wtChange).toFixed(2)}%</span><br><span style="font-weight: normal; font-size: 13px; display: inline-block; margin-top: 4px;">(ระยะเวลา: ${wdText})</span>`);
+
+    let ibw = gender === 'ชาย' ? 50 + 0.9 * (height - 152.4) : 45.5 + 0.9 * (height - 152.4);
+
+    // คำนวณส่วนต่างน้ำหนักเพื่อบอกว่าต้องลดหรือเพิ่ม
+    let ibwDiffText = "";
+    if (abw > 0 && ibw > 0) {
+      let diff = abw - ibw;
+      if (Math.abs(diff) < 0.1) {
+        ibwDiffText = `<span style="color:#27ae60;">น้ำหนักอยู่ในเกณฑ์อุดมคติพอดี</span>`;
+      } else if (diff > 0) {
+        ibwDiffText = `<span style="color:#e67e22;">ควรลด ${diff.toFixed(1)} kg</span>`;
+      } else {
+        ibwDiffText = `<span style="color:#3498db;">ควรเพิ่ม ${Math.abs(diff).toFixed(1)} kg</span>`;
+      }
+    }
+
+    // พลังงาน (TEE)
+    const formula = document.getElementById('energyFormula').value;
+    const wtType = document.getElementById('weightToUse').value;
+    let wCalc = wtType === 'ibw' ? ibw : (wtType === 'adjbw' ? ibw + 0.25 * (abw - ibw) : abw);
+    
+    let af = parseFloat(document.getElementById('af').value) || 1;
+    let sf = parseFloat(document.getElementById('sf').value) || 1;
+    let tf = parseFloat(document.getElementById('tf').value) || 1;
+    let tee = 0;
+
+    if (formula === 'quick') {
+      tee = wCalc * (parseFloat(document.getElementById('quickMethodValue').value) || 0);
+    } else if (formula === 'mifflin') {
+      let bmr = (10 * wCalc) + (6.25 * height) - (5 * age) + (gender === 'ชาย' ? 5 : -161);
+      tee = bmr * af * sf * tf;
+    } else if (formula === 'harris') {
+      let bmr = gender === 'ชาย' ? 66.5 + (13.75 * wCalc) + (5.003 * height) - (6.775 * age) : 655.1 + (9.563 * wCalc) + (1.850 * height) - (4.676 * age);
+      tee = bmr * af * sf * tf;
+    }
+
+    // ปรับ TEE ตามเป้าหมายน้ำหนัก
+    const weightGoal = document.querySelector('input[name="weightGoal"]:checked').value;
+    if (weightGoal === 'reduce') {
+        const reduceKcal = parseFloat(document.getElementById('reduceKcalValue').value) || 0;
+        tee -= reduceKcal;
+    } else if (weightGoal === 'increase') {
+        const increaseKcal = parseFloat(document.getElementById('increaseKcalValue').value) || 0;
+        tee += increaseKcal;
+    }
+    // ถ้าเป็น 'maintain' ไม่ต้องทำอะไร
+
+    // สารอาหาร (Macros)
+    let cPct = parseFloat(document.getElementById('carbPercent').value) || 0;
+    let fPct = parseFloat(document.getElementById('fatPercent').value) || 0;
+    let cGram = (tee * cPct / 100) / 4;
+    let fGram = (tee * fPct / 100) / 9;
+    
+    let pMethod = document.getElementById('proteinCalcMethod').value;
+    let pGram = pMethod === 'percent' ? ((tee * (parseFloat(document.getElementById('proteinPercent').value) || 0) / 100) / 4) 
+                                      : (wCalc * (parseFloat(document.getElementById('proteinFactor').value) || 0));
+    let pKcal = pGram * 4;
+
+    // บันทึกข้อมูลเป้าหมายลง LocalStorage เพื่อส่งข้ามไปหน้า Food Exchange
+    localStorage.setItem('targetTEE', tee);
+    localStorage.setItem('targetCarb', cGram);
+    localStorage.setItem('targetPro', pGram);
+    localStorage.setItem('targetFat', fGram);
+    localStorage.setItem('targetCarbPct', cPct);
+    localStorage.setItem('targetFatPct', fPct);
+    localStorage.setItem('targetProMethod', pMethod);
+    if(pMethod === 'percent') {
+      localStorage.setItem('targetProPct', parseFloat(document.getElementById('proteinPercent').value) || 0);
+    }
+
+    // น้ำ
+    let fluid = wCalc * 30; // ใช้ 30 ml/kg เป็นค่าเบื้องต้น
+
+    document.getElementById('summaryCalc').innerHTML = `
+      <div class="report-wrapper">
+        <div class="report-title"><span style="font-size: 24px;">🧮</span> ผลการคำนวณโภชนาการ</div>
+        
+        <div class="highlight-grid">
+          <div class="highlight-item energy-box">
+            <div class="highlight-label">พลังงานที่ควรได้รับ (Total Energy)</div>
+            <div class="highlight-value">${Math.round(tee).toLocaleString()} <span class="highlight-unit">kcal/วัน</span></div>
+          </div>
+          <div class="highlight-item bmi-box">
+            <div class="highlight-label">ดัชนีมวลกาย (BMI)</div>
+            <div class="highlight-value sub">${bmi.toFixed(2)}</div>
+            ${bmiHtml}
+            <div class="highlight-desc" style="border-top: 1px dashed #eee; padding-top: 10px; margin-top: 10px; color: var(--text-grey);">น้ำหนัก: ${wtChangeText}</div>
+          </div>
+          <div class="highlight-item ibw-box">
+            <div class="highlight-label">น้ำหนักอุดมคติ (IBW)</div>
+            <div class="highlight-value sub">${ibw.toFixed(1)} <span class="highlight-unit">kg</span></div>
+            <div style="font-size: 15px; font-weight: bold; margin-top: 5px;">${ibwDiffText}</div>
+            <div class="highlight-desc" style="color: #95a5a6; font-weight: normal; font-size: 13px; border-top: 1px dashed #eee; padding-top: 10px; margin-top: 10px;">(Devine formula)</div>
+          </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 35px; font-weight: bold; font-size: 16px; color: var(--green);">🍽️ สัดส่วนสารอาหาร (Macronutrients)</div>
+        
+        <div class="macro-clean-container">
+          <div class="macro-clean-item">
+            <div class="macro-clean-title"><span>🍚</span> Carb</div>
+            <div class="macro-clean-val">${Math.round(cGram)} g</div>
+            <div class="macro-clean-sub">${Math.round(cGram * 4)} kcal</div>
+            <div style="font-size: 16px; color: #d35400; margin-top: 8px; font-weight: bold;">~ ${(cGram / 18).toFixed(1)} ทัพพี</div>
+          </div>
+          <div class="macro-clean-item">
+            <div class="macro-clean-title"><span>🥩</span> Protein</div>
+            <div class="macro-clean-val">${Math.round(pGram)} g</div>
+            <div class="macro-clean-sub">${Math.round(pKcal)} kcal</div>
+            <div style="font-size: 16px; color: #d35400; margin-top: 8px; font-weight: bold;">~ ${(pGram * 2 / 7).toFixed(1)} ช้อนโต๊ะ</div>
+          </div>
+          <div class="macro-clean-item">
+            <div class="macro-clean-title"><span>🥑</span> Fat</div>
+            <div class="macro-clean-val">${Math.round(fGram)} g</div>
+            <div class="macro-clean-sub">${Math.round(fGram * 9)} kcal</div>
+            <div style="font-size: 16px; color: #d35400; margin-top: 8px; font-weight: bold;">~ ${(fGram / 5).toFixed(1)} ช้อนชา</div>
+          </div>
+        </div>
+
+        <div class="water-clean">
+          💧 ปริมาณน้ำที่ควรได้รับต่อวัน <span class="val">${Math.round(fluid).toLocaleString()} ml</span>
+        </div>
+
+        <div class="fiber-clean">
+          🌾 ปริมาณใยอาหารที่แนะนำให้บริโภค  <span class="val"> 25-38 กรัม/วัน</span>
+        </div>
+
+        <div class="sodium-clean">
+          🧂 ปริมาณโซเดียมไม่เกิน <span class="val">2,000 มิลลิกรัม/วัน</span>
+          <div class="details">เทียบเท่า: เกลือ 1 ช้อนชา / น้ำปลา 4 ช้อนชา / ซีอิ๊วขาว-ซอสปรุงรส 6 ช้อนชา / ซอสหอยนางรม 4 ช้อนโต๊ะ</div>
+        </div>
+
+        <div class="sugar-clean">
+          🍬 ปริมาณน้ำตาลที่แนะนำให้บริโภคไม่เกิน <span class="val"> 24 กรัม/วัน</span>
+          <div class="details">เทียบเท่า: น้ำตาล 6 ช้อนชา </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function goToPage2From3() {
+    document.getElementById('p3').classList.remove('active');
+    document.getElementById('p2').classList.add('active');
+    document.getElementById('prog').style.width = '66%';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function saveAsImage() {
+    const btn = document.getElementById('btnSaveImg');
+    const originalText = btn.innerText;
+    btn.innerText = 'กำลังบันทึก...';
+    btn.disabled = true; // ป้องกันการกดซ้ำ
+
+    // เลือกเฉพาะส่วนพื้นที่สรุปผลที่จะให้บันทึกภาพ
+    const element = document.getElementById('exportArea');
+    html2canvas(element, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+      const link = document.createElement('a');
+      link.download = 'DietDoDo_Report.png'; // ตั้งชื่อไฟล์
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+      btn.innerText = originalText;
+      btn.disabled = false;
+    }).catch(err => {
+      console.error(err);
+      alert('เกิดข้อผิดพลาดในการบันทึกรูปภาพ');
+      btn.innerText = originalText;
+      btn.disabled = false;
+    });
+  }
+
+  function toggleWeightGoalOptions() {
+    const goal = document.querySelector('input[name="weightGoal"]:checked').value;
+    const reduceSection = document.getElementById('reduceKcal-section');
+    const increaseSection = document.getElementById('increaseKcal-section');
+
+    if (goal === 'reduce') {
+      reduceSection.style.display = 'block';
+      increaseSection.style.display = 'none';
+    } else if (goal === 'increase') {
+      reduceSection.style.display = 'none';
+      increaseSection.style.display = 'block';
+    } else { // maintain
+      reduceSection.style.display = 'none';
+      increaseSection.style.display = 'none';
+    }
+  }
+
+  function toggleQuickMethod() {
+    const formula = document.getElementById('energyFormula').value;
+    const section = document.getElementById('quickMethod-section');
+    section.style.display = (formula === 'quick') ? 'block' : 'none';
+  }
+
+  function toggleProteinMethod() {
+    const method = document.getElementById('proteinCalcMethod').value;
+    if (method === 'factor') {
+      document.getElementById('proteinFactor-section').style.display = 'block';
+      document.getElementById('proteinPercent-section').style.display = 'none';
+    } else {
+      document.getElementById('proteinFactor-section').style.display = 'none';
+      document.getElementById('proteinPercent-section').style.display = 'block';
+    }
+    checkPercentage(); // อัปเดตการคำนวณ % เมื่อเปลี่ยนโหมด
+  }
+
+  function checkPercentage() {
+    const c = parseFloat(document.getElementById('carbPercent').value) || 0;
+    const f = parseFloat(document.getElementById('fatPercent').value) || 0;
+    let p = 0;
+    
+    const method = document.getElementById('proteinCalcMethod').value;
+    if (method === 'percent') {
+      p = parseFloat(document.getElementById('proteinPercent').value) || 0;
+    }
+
+    const total = c + f + p;
+    const warningEl = document.getElementById('percentWarning');
+    
+    if (method === 'percent') {
+      if (total !== 100 && (c > 0 || f > 0 || p > 0)) {
+        warningEl.style.display = 'block';
+        warningEl.innerHTML = `คำเตือน: สัดส่วนพลังงานรวมยังไม่เท่ากับ 100% (ปัจจุบัน: ${total}%)`;
+        warningEl.style.color = (total > 100) ? '#e74c3c' : '#e67e22';
+      } else {
+        warningEl.style.display = 'none';
+      }
+    } else {
+      warningEl.style.display = 'none';
+    }
+  }
+
+  function pressCalc(v) { document.getElementById('calcDisplay').value += v; }
+  function clearCalc() { document.getElementById('calcDisplay').value = ''; }
+  function backspaceCalc() {
+    let d = document.getElementById('calcDisplay').value;
+    document.getElementById('calcDisplay').value = d.slice(0, -1);
+  }
+  
+  function percentCalc() {
+    let d = document.getElementById('calcDisplay').value;
+    if (d !== '') {
+      try {
+        document.getElementById('calcDisplay').value = String(Function('"use strict";return (' + d + ')')() / 100);
+      } catch (e) {
+        document.getElementById('calcDisplay').value = 'Error';
+      }
+    }
+  }
+
+  function solveCalc() {
+    try {
+      document.getElementById('calcDisplay').value = Function('"use strict";return (' + document.getElementById('calcDisplay').value + ')')();
+    } catch (e) {
+      document.getElementById('calcDisplay').value = 'Error';
+    }
+  }
+
+  function checkGender() {
+    var genderValue = document.getElementById('gender').value;
+    var pregnancySection = document.getElementById('pregnancy-section');
+    if (genderValue === 'หญิง') {
+      pregnancySection.style.display = 'block';
+    } else {
+      pregnancySection.style.display = 'none';
+    }
+  }
+</script>
+
+</body>
+</html>

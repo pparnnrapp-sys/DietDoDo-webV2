@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DietDoDo - หน้าแรก</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.9.10/dist/dotlottie-wc.js" type="module"></script>
+  <style>
+    :root {
+      --bg-color: #dcecc9; /* สีขอบ ปรับให้นุ่มละมุนขึ้น */
+      --bg-color-light: #f4f9ec; /* สีตรงกลาง สว่างและสะอาดตา */
+      --text-dark: #2c3e50; /* สีเทาเข้มอมน้ำเงิน ดูเป็นมืออาชีพและสบายตาขึ้น */
+      --text-grey: #7f8c8d; /* สีเทาโทนเย็น ไม่อมน้ำตาล */
+      --orange: #f27d16; /* สีส้ม ปรับให้ดูพรีเมียม ไม่แสบตาเกินไป */
+      --green: #86c140; /* สีเขียวโลโก้ (คงเอกลักษณ์แบรนด์) */
+      --dark-green: #3a6b22; /* สีเขียวเข้ม นุ่มนวลขึ้น */
+      --red: #ff6b6b; 
+      --yellow: #f1c40f; 
+    }
+    
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    
+    body { 
+      margin: 0; 
+      padding: 0; 
+      background: var(--bg-color-light);
+      background: radial-gradient(circle at 80% 50%, var(--bg-color-light) 0%, var(--bg-color) 100%);
+      background-attachment: fixed;
+      font-family: 'Poppins', sans-serif; /* ฟอนต์ไม่มีหัวตามรีเควส */
+      overflow: hidden; /* ล็อคหน้าจอให้เป็นสัดส่วนเต็มพอดี */
+      height: 100vh;
+      position: relative;
+    }
+
+    /* Header ส่วนบน */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 40px;
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+    }
+
+    /* โลโก้ฝั่งซ้าย */
+    .logo-container {
+      width: 180px; /* ปรับขนาดให้พอดีกับแถบ Header */
+      max-width: 100%;
+      display: block; /* เพื่อให้โครงสร้างของ a ทำงานได้เหมือน div */
+      transition: transform 0.3s ease, filter 0.3s ease;
+    }
+    .logo-container:hover {
+      transform: translateY(-2px) scale(1.02); /* ขยับเด้งขึ้นและขยายขนาดนิดนึง */
+      filter: drop-shadow(0 5px 15px rgba(255, 255, 255, 0.6)) brightness(1.1); /* เพิ่มแสงสว่างและเงาเรืองแสง */
+    }
+
+    /* เมนูฝั่งขวา */
+    nav.menu-links {
+      display: flex;
+      gap: 40px;
+    }
+    nav.menu-links a {
+      text-decoration: none;
+      color: var(--text-grey);
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: 1.5px;
+      transition: all 0.3s ease;
+      border-bottom: 3px solid transparent;
+      padding-bottom: 5px;
+    }
+    nav.menu-links a:hover, nav.menu-links a.active {
+      color: var(--text-dark);
+      transform: translateY(-2px);
+      border-bottom: 3px solid var(--orange);
+    }
+
+    /* คอนเทนต์หลักกลางซ้าย */
+    .hero-content {
+      position: absolute;
+      top: 28%; /* ขยับสูงขึ้นมาให้อยู่ในระดับสายตาที่พอดี */
+      left: 80px;
+      transform: translateY(-50%); /* จัดให้อยู่กึ่งกลางพอดีเป๊ะ */
+      z-index: 10;
+      animation: fadeInUp 1s ease-out forwards;
+    }
+    .main-text {
+      font-size: 64px;
+      font-weight: 800;
+      color: var(--text-dark);
+      line-height: 1.15;
+      max-width: 600px;
+      margin-bottom: 10px; 
+    }
+
+    .sub-quote {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--dark-green);
+      margin-bottom: 5px; /* เว้นระยะให้หายใจ */
+      margin-left: 0; /* จัดชิดซ้ายตรงกับข้อความหลัก */
+    }
+    .author-text {
+      font-size: 18px; /* ปรับให้ตัวเล็กลงเพื่อไม่แย่งความสนใจ */
+      color: var(--text-grey);
+      font-style: italic; /* ทำเป็นตัวเอียงให้ดูเหมือนเครดิตผู้แต่ง */
+      margin-left: 0px;
+      margin-bottom: 20px; /* เว้นระยะห่างก่อนถึงปุ่ม START */
+    }
+    .start-btn {
+      display: inline-block;
+      background-color: var(--orange);
+      color: #fff;
+      font-size: 22px;
+      font-weight: 700;
+      padding: 10px 30px;
+      border-radius: 30px;
+      text-decoration: none;
+      box-shadow: 0 8px 15px rgba(255, 127, 0, 0.3);
+      transition: all 0.3s ease; /* เปลี่ยนเป็น all เพื่อให้แอนิเมชันทำงานกับทุกค่าที่เปลี่ยน */
+      margin-left: 0; /* วางชิดซ้ายให้ตรงกับขอบข้อความทั้งหมด */
+    }
+    .mobile-btn {
+      display: none;
+    }
+    .start-btn:hover {
+      transform: translateY(-5px) scale(1.05); /* เด้งขึ้น 5px และขยายปุ่มขึ้น 5% */
+      box-shadow: 0 15px 25px rgba(255, 127, 0, 0.5); /* เพิ่มเงาให้ฟุ้งและกว้างขึ้น */
+      background-color: #ff9429; /* เปลี่ยนสีส้มให้สว่างขึ้นเล็กน้อย */
+    }
+
+    /* แอนิเมชันฝั่งขวาล่าง */
+    .hero-animation {
+      position: absolute;
+      bottom: -140px;
+      right: -60px;
+      z-index: 5;
+      width: 700px;
+      height: 700px;
+      max-width: 90vw;
+      max-height: 90vw;
+    }
+
+    /* ไอคอนพื้นหลังแบบลายเส้น (Floating Icons) */
+    .bg-icons {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%; /* เปลี่ยนเป็น 100% ให้กระจายทั่วจอ */
+      height: 100%;
+      z-index: 1;
+      pointer-events: none; /* ไม่ให้ขัดขวางการคลิกของเมนู/ปุ่ม */
+    }
+    .bg-icon {
+      position: absolute;
+      opacity: 0.3; /* ปรับให้สีสันชัดเจนขึ้นอีกนิด */
+      animation: float-bg 6s ease-in-out infinite;
+    }
+    .bg-icon svg {
+      width: 100%;
+      height: 100%;
+      stroke: var(--text-dark);
+      fill: none;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.2)); /* เพิ่มเงาให้ดูมีมิติ */
+    }
+    .bg-icon.orange svg {
+      stroke: var(--orange); /* เปลี่ยนสีลายเส้นเป็นสีส้ม */
+    }
+    .bg-icon.green svg {
+      stroke: var(--green); /* สีเขียว */
+    }
+    .bg-icon.red svg {
+      stroke: var(--red); /* สีแดง */
+    }
+    .bg-icon.grey svg {
+      stroke: var(--text-grey); /* สีเทาอมน้ำตาล */
+    }
+    .bg-icon.yellow svg {
+      stroke: var(--yellow); /* สีเหลือง */
+    }
+    .bg-icon-1 { top: 20%; left: 8%; width: 90px; height: 70px; animation-delay: 0s; }
+    .bg-icon-1 svg { transform: rotate(-15deg); }
+    .bg-icon-2 { top: 20%; left: 50%; width: 100px; height: 100px; animation-delay: 2s; } /* ย้ายแครอทมาอยู่บนหัวใจ */
+    .bg-icon-2 svg { transform: rotate(25deg); }
+    .bg-icon-3 { top: 55%; left: 4%; width: 80px; height: 80px; animation-delay: 4s; }
+    .bg-icon-3 svg { transform: rotate(-10deg); }
+    .bg-icon-4 { top: 20%; left: 28%; width: 65px; height: 65px; animation-delay: 1.5s; }
+    .bg-icon-4 svg { transform: rotate(15deg); }
+    .bg-icon-5 { bottom: 25%; left: 46%; width: 75px; height: 75px; animation-delay: 1s; }
+    .bg-icon-5 svg { transform: rotate(20deg); }
+    .bg-icon-6 { top: 65%; left: 25%; width: 85px; height: 85px; animation-delay: 3.5s; }
+    .bg-icon-6 svg { transform: rotate(-25deg); }
+    .bg-icon-7 { top: 35%; left: 40%; width: 60px; height: 60px; animation-delay: 2.5s; } /* ย้ายหัวใจมาลอยเหนือคำว่า eat */
+    .bg-icon-7 svg { transform: rotate(10deg); }
+    .bg-icon-8 { bottom: 5%; left: 35%; width: 90px; height: 90px; animation-delay: 0.5s; }
+    .bg-icon-8 svg { transform: rotate(-15deg); }
+
+    @keyframes float-bg {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+    }
+    
+    /* แอนิเมชันเปิดตัวข้อความ */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .hero-content { left: 50px; }
+      .main-text { font-size: 48px; }
+      .sub-quote { font-size: 28px; }
+      .author-text { font-size: 18px; }
+      .hero-animation { right: 20px; bottom: 20px; }
+    }
+    @media (max-width: 768px) {
+      body { overflow-y: auto; overflow-x: hidden; height: auto; min-height: 100vh; display: flex; flex-direction: column; }
+      header { position: sticky; flex-direction: column; gap: 8px; padding: 10px; }
+      .logo-container { width: 140px; }
+      nav.menu-links { flex-wrap: wrap; justify-content: center; gap: 15px; }
+      nav.menu-links a { font-size: 15px; }
+      .hero-content { position: relative; top: auto; left: auto; transform: none; text-align: center; width: 100%; padding: 30px 20px 10px; margin: 0 auto; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; }
+      .main-text { font-size: 38px; margin-bottom: 10px; margin-left: auto; margin-right: auto; }
+      .sub-quote { font-size: 20px; margin-bottom: 5px; }
+      .author-text { font-size: 14px; margin-bottom: 20px; }
+      .desktop-btn { display: none; }
+      .mobile-btn { display: inline-block; font-size: 18px; padding: 10px 30px; margin: -40px auto 40px auto; align-self: center; position: relative; z-index: 10; }
+      .hero-animation { position: relative; bottom: auto; right: auto; left: auto; transform: none; width: 100%; max-width: 400px; height: 400px; margin: -80px auto 10px auto; z-index: 5; }
+      .bg-icon { opacity: 0.25; } /* ปรับความเข้มขึ้นนิดนึงเพื่อให้เห็นความมีมิติชัดขึ้น */
+      .bg-icon-1 { width: 75px; height: 55px; }
+      .bg-icon-2 { width: 85px; height: 85px; }
+      .bg-icon-3 { width: 70px; height: 70px; }
+      .bg-icon-4 { width: 55px; height: 55px; }
+      .bg-icon-5 { width: 65px; height: 65px; }
+      .bg-icon-6 { width: 70px; height: 70px; }
+      .bg-icon-7 { width: 50px; height: 50px; }
+      .bg-icon-8 { width: 75px; height: 75px; }
+    }
+    @media (max-width: 480px) {
+      header { padding: 8px; }
+      .logo-container { width: 120px; }
+      nav.menu-links { gap: 10px; }
+      nav.menu-links a { font-size: 13px; }
+      .hero-content { padding-top: 20px; }
+      .main-text { font-size: 32px; }
+      .sub-quote { font-size: 16px; }
+      .hero-animation { max-width: 340px; height: 340px; margin: -80px auto 10px auto; }
+      .bg-icon-1 { width: 60px; height: 45px; }
+      .bg-icon-2 { width: 70px; height: 70px; }
+      .bg-icon-3 { width: 55px; height: 55px; }
+      .bg-icon-4 { width: 45px; height: 45px; }
+      .bg-icon-5 { width: 50px; height: 50px; }
+      .bg-icon-6 { width: 55px; height: 55px; }
+      .bg-icon-7 { width: 40px; height: 40px; }
+      .bg-icon-8 { width: 60px; height: 60px; }
+    }
+  </style>
+</head>
+<body>
+
+
+
+  <!-- ไอคอนพื้นหลังลายเส้น -->
+  <div class="bg-icons">
+    <!-- แอปเปิ้ล -->
+    <div class="bg-icon bg-icon-1 red">
+      <svg viewBox="0 0 24 24"><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/><path d="M10 2c1 .5 2 2 2 5"/></svg>
+    </div>
+    <!-- แครอท -->
+    <div class="bg-icon bg-icon-2 orange">
+      <svg viewBox="0 0 24 24"><path d="M2.27 21.7s9.87-3.5 12.73-6.36a4.5 4.5 0 0 0-6.36-6.37C5.77 11.84 2.27 21.7 2.27 21.7zM8.64 14l-2.05-2.04M15.34 15.36l-2.46-2.46"/><path d="M22 9.64V2l-7.64 7.64"/><path d="M22 2l-3.82 3.82"/><path d="M14.36 2H22"/></svg>
+    </div>
+    <!-- เครื่องชั่งน้ำหนัก -->
+    <div class="bg-icon bg-icon-3 grey">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" ry="2"/><path d="M9 4v5h6V4"/><path d="M12 4v5"/><path d="M10 14h4"/></svg>
+    </div>
+    <!-- ใบไม้ -->
+    <div class="bg-icon bg-icon-4 green">
+      <svg viewBox="0 0 24 24"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 22l10-10"/></svg>
+    </div>
+    <!-- อะโวคาโด -->
+    <div class="bg-icon bg-icon-5 green">
+      <svg viewBox="0 0 24 24"><path d="M12 2C8 2 5 7 5 13.5C5 17.64 8 22 12 22s7-4.36 7-8.5C19 7 16 2 12 2z"/><circle cx="12" cy="15" r="3"/></svg>
+    </div>
+    <!-- ที่วัดส่วนสูง (ไม้บรรทัด/สายวัด) -->
+    <div class="bg-icon bg-icon-6 yellow">
+      <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 6v4"/><path d="M10 6v2"/><path d="M14 6v4"/><path d="M18 6v2"/></svg>
+    </div>
+    <!-- หัวใจ -->
+    <div class="bg-icon bg-icon-7 red">
+      <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    </div>
+    <!-- แก้วกาแฟ -->
+    <div class="bg-icon bg-icon-8 grey">
+      <svg viewBox="0 0 24 24"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><path d="M6 2v2 M10 2v2 M14 2v2"/></svg>
+    </div>
+  </div>
+
+  <header>
+    <!-- โลโก้ DietDoDo -->
+    <a href="index.html" class="logo-container" aria-label="DietDoDo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 150" width="100%" height="auto">
+        <defs>
+          <style>
+            .font-main {
+              font-family: 'Nunito', 'Segoe UI', Tahoma, sans-serif; /* ใช้ฟอนต์ไม่มีหัวที่มีความโค้งมน */
+              font-weight: 900;
+              font-size: 100px;
+              fill: #0b0b0b;
+            }
+            .color-green { fill: #86C140; }
+            .color-orange { fill: #F7931E; }
+            
+            /* แอนิเมชันเด้งขึ้นลงสำหรับจุดวงกลม */
+            @keyframes bounce-dot {
+              0%, 100% { transform: translateY(0); }
+              50% { transform: translateY(-15px); }
+            }
+            .anim-bounce-dot { animation: bounce-dot 1s ease-in-out 3; }
+
+            /* แอนิเมชันใบไม้(ตัว m) โดนลมพัด */
+            @keyframes tree-sway {
+              0%, 100% { transform: rotate(-4deg); }
+              50% { transform: rotate(4deg); }
+            }
+            .anim-tree { animation: tree-sway 1.5s ease-in-out infinite; transform-origin: 30px 25px; }
+
+            
+          </style>
+        </defs>
+        <text x="20" y="115" class="font-main">D</text>
+        <rect x="110" y="55" width="22" height="60" rx="11" class="color-orange" />
+        <circle cx="121" cy="30" r="12" class="color-green anim-bounce-dot" />
+        <text x="145" y="115" class="font-main">e</text>
+        <text x="210" y="115" class="font-main">t</text>
+        <text x="275" y="115" class="font-main">D</text>
+      <g transform="translate(365, 30)">
+  <path class="anim-tree" d="M 5,25 C 2,15 15,5 30,20 C 35,15 50,5 55,25" fill="none" stroke="#86C140" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="15" cy="45" r="7" class="color-green" />
+  <circle cx="45" cy="45" r="7" class="color-green" />
+  <path d="M 5,60 A 25 20 0 0 0 55,60" fill="none" stroke="#0b0b0b" stroke-width="12" stroke-linecap="round"/>
+</g>
+      <text x="440" y="115" class="font-main">D</text>
+      <g transform="translate(550, 80)">
+        <circle cx="0" cy="8" r="22" fill="none" stroke="#0b0b0b" stroke-width="16" />
+      </g>
+      </svg>
+    </a>
+
+    <!-- เมนู Navigation -->
+    <nav class="menu-links">
+      <a href="index.html" class="active">HOME</a>
+      <a href="menu.html">MENU</a>
+      <a href="about.html">ABOUT</a>
+    </nav>
+  </header>
+
+  <!-- ข้อความหลักกลางซ้าย -->
+  <div class="hero-content">
+    <div class="main-text">
+      "You are<br>what you <span style="color: var(--orange);">eat</span>"
+    </div>
+    <div class="sub-quote">Der Mensch ist,was er ißt</div>
+    <div class="author-text">-Ludwig Andreas Feuerbach-</div>
+    <a href="menu.html" class="start-btn desktop-btn">START</a>
+  </div>
+
+  <!-- แอนิเมชันมุมขวาล่าง -->
+  <div class="hero-animation">
+    <dotlottie-wc src="https://lottie.host/fbd94216-dc30-48a3-b0fc-422ac0a2e17b/RfuB1sW8cZ.lottie"
+     style="width: 100%; height: 100%;" autoplay loop></dotlottie-wc>
+  </div>
+
+  <!-- ปุ่ม START สำหรับมือถือ (แสดงใต้ตัวการ์ตูน) -->
+  <a href="menu.html" class="start-btn mobile-btn">START</a>
+
+</body>
+</html>

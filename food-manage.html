@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DietDoDo - จัดการฐานข้อมูลอาหาร</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;800&family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #dcecc9; 
+      --bg-color-light: #f4f9ec; 
+      --text-dark: #2c3e50;
+      --text-grey: #7f8c8d;
+      --orange: #f27d16;
+      --green: #86c140;
+    }
+    
+    *, *::before, *::after { box-sizing: border-box; }
+    
+    body { 
+      margin: 0; padding: 0; 
+      background: #f9fcf5;
+      font-family: 'Sarabun', sans-serif;
+      min-height: 100vh;
+    }
+
+    header { position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 8px 40px; font-family: 'Poppins', sans-serif; background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.6); }
+    .logo-container { width: 180px; max-width: 100%; display: block; transition: transform 0.3s ease, filter 0.3s ease; }
+    .logo-container:hover { transform: translateY(-2px) scale(1.02); filter: drop-shadow(0 5px 15px rgba(255, 255, 255, 0.6)) brightness(1.1); }
+    nav.menu-links { display: flex; gap: 40px; }
+    nav.menu-links a { text-decoration: none; color: var(--text-grey); font-weight: 700; font-size: 18px; letter-spacing: 1.5px; transition: 0.3s; border-bottom: 3px solid transparent; padding-bottom: 5px; }
+    nav.menu-links a:hover, nav.menu-links a.active { color: var(--text-dark); transform: translateY(-2px); border-bottom: 3px solid var(--orange); }
+
+    .app-wrapper { display: flex; justify-content: center; padding: 20px; padding-bottom: 60px; }
+    .app-container { background: rgba(255, 255, 255, 0.95); width: 100%; max-width: 900px; border-radius: 24px; box-shadow: 0 15px 40px rgba(0,0,0,0.08); padding: 40px; }
+    
+    .app-header { text-align: center; margin-bottom: 30px; }
+    .app-logo { font-family: 'Poppins', sans-serif; font-size: 32px; font-weight: 800; color: var(--text-dark); margin: 0; }
+    .app-subtitle { font-size: 15px; color: var(--text-grey); margin-top: 5px; }
+    .header-line { width: 50px; height: 4px; background: var(--orange); margin: 15px auto; border-radius: 2px; }
+
+    .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+    .btn { padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; font-family: 'Sarabun', sans-serif; transition: 0.3s; }
+    .btn-add { background: var(--green); color: white; }
+    .btn-add:hover { background: #75a835; }
+    .btn-reset { background: #e74c3c; color: white; }
+    .btn-reset:hover { background: #c0392b; }
+    .btn-cancel { background: #eee; color: #333; }
+    .btn-save { background: var(--orange); color: white; }
+    
+    .action-btn { background: transparent; border: none; cursor: pointer; font-size: 16px; margin: 0 5px; transition: 0.2s; }
+    .action-btn.edit:hover { color: var(--orange); transform: scale(1.1); }
+    .action-btn.delete:hover { color: #e74c3c; transform: scale(1.1); }
+
+    .filter-toolbar { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+    .filter-input { padding: 10px 15px; border-radius: 8px; border: 2px solid #eee; font-family: 'Sarabun', sans-serif; font-size: 15px; outline: none; transition: 0.3s; background: #fff; }
+    .filter-input:focus { border-color: var(--orange); box-shadow: 0 2px 8px rgba(255, 127, 0, 0.1); }
+    .filter-text { flex: 2; min-width: 200px; color: var(--text-dark); }
+
+    .db-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    .db-table th, .db-table td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 15px; }
+    .db-table th { background-color: #f8f9fa; color: #34495e; font-weight: bold; }
+    .db-table td.center { text-align: center; }
+    
+    .tag { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 5px; vertical-align: middle; }
+
+    /* Modal Styles */
+    .modal-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items:center; justify-content:center; backdrop-filter: blur(5px); }
+    .modal-content { background: #fff; padding: 30px; border-radius: 16px; width: 90%; max-width: 500px; box-shadow: 0 15px 40px rgba(0,0,0,0.2); animation: slideUp 0.3s ease; }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal-header { font-size: 20px; font-weight: bold; color: var(--green); margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #34495e; font-size: 14px; }
+    .form-group input, .form-group select { width: 100%; padding: 10px; border: 2px solid #eee; border-radius: 8px; font-size: 15px; font-family: 'Sarabun', sans-serif; transition: 0.3s; box-sizing: border-box; }
+    .form-group input:focus, .form-group select:focus { border-color: var(--orange); outline: none; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
+
+    @media (max-width: 768px) {
+      header { flex-direction: column; gap: 10px; padding: 10px; }
+      .logo-container { width: 140px; }
+      nav.menu-links { flex-wrap: wrap; justify-content: center; gap: 15px; }
+      .app-container { padding: 20px; }
+      .db-table th, .db-table td { padding: 10px 5px; font-size: 13px; }
+      .toolbar { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="logo-container">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 150" width="100%" height="auto">
+        <text x="20" y="115" style="font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 100px; fill: #0b0b0b;">D</text>
+        <rect x="110" y="55" width="22" height="60" rx="11" fill="#F7931E" />
+        <circle cx="121" cy="30" r="12" fill="#86C140" />
+        <text x="145" y="115" style="font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 100px; fill: #0b0b0b;">e</text>
+        <text x="210" y="115" style="font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 100px; fill: #0b0b0b;">t</text>
+        <text x="275" y="115" style="font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 100px; fill: #0b0b0b;">D</text>
+        <circle cx="395" cy="45" r="7" fill="#86C140" />
+        <text x="440" y="115" style="font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 100px; fill: #0b0b0b;">D</text>
+      </svg>
+    </a>
+    <nav class="menu-links">
+      <a href="index.html">HOME</a>
+      <a href="menu.html">MENU</a>
+      <a href="food-exchange.html" style="color: var(--orange);">➔ กลับหน้าคำนวณ</a>
+    </nav>
+  </header>
+
+  <div class="app-wrapper">
+    <div class="app-container">
+      <div class="app-header">
+        <h1 class="app-logo">Food Database</h1>
+        <div class="header-line"></div>
+        <p class="app-subtitle">จัดการฐานข้อมูลอาหารสำหรับระบบค้นหา (Food Search)</p>
+      </div>
+
+      <div class="toolbar">
+        <button class="btn btn-add" onclick="openModal()">+ เพิ่มรายการอาหารใหม่</button>
+        <button class="btn btn-reset" onclick="resetDatabase()">คืนค่าเริ่มต้นทั้งหมด</button>
+      </div>
+
+      <div class="filter-toolbar">
+        <input type="text" id="searchFood" class="filter-input filter-text" oninput="applyFilters()" placeholder="🔍 ค้นหาชื่ออาหาร หรือหมวดหมู่...">
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table class="db-table" id="foodTable">
+          <thead>
+            <tr>
+              <th>ชื่ออาหาร</th>
+              <th>หมวดหมู่</th>
+              <th>ปริมาณ 1 ส่วน</th>
+              <th class="center">น้ำหนัก (กรัม)</th>
+              <th class="center">จัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="foodTableBody">
+            <!-- Data will be rendered here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal สำหรับเพิ่ม/แก้ไข -->
+  <div class="modal-overlay" id="foodModal">
+    <div class="modal-content">
+      <div class="modal-header" id="modalTitle">เพิ่มรายการอาหาร</div>
+      <div class="form-group">
+        <label>ชื่ออาหาร <span style="color:red;">*</span></label>
+        <input type="text" id="inpName" placeholder="เช่น แครอท (สุก)">
+      </div>
+      <div class="form-group">
+        <label>หมวดหมู่อาหาร <span style="color:red;">*</span></label>
+        <select id="inpCategory">
+          <option value="นมเต็มส่วน">นมเต็มส่วน</option>
+          <option value="นมพร่องมันเนย">นมพร่องมันเนย</option>
+          <option value="นมขาดมันเนย">นมขาดมันเนย</option>
+          <option value="ผัก ก.">ผัก ก.</option>
+          <option value="ผัก ข.">ผัก ข.</option>
+          <option value="ผลไม้">ผลไม้</option>
+          <option value="ข้าว-แป้ง" selected>ข้าว-แป้ง</option>
+          <option value="เนื้อสัตว์ (ไขมันต่ำมาก)">เนื้อสัตว์ (ไขมันต่ำมาก)</option>
+          <option value="เนื้อสัตว์ (ไขมันต่ำ)">เนื้อสัตว์ (ไขมันต่ำ)</option>
+          <option value="เนื้อสัตว์ (ไขมันปานกลาง)">เนื้อสัตว์ (ไขมันปานกลาง)</option>
+          <option value="เนื้อสัตว์ (ไขมันสูง)">เนื้อสัตว์ (ไขมันสูง)</option>
+          <option value="ไขมันที่มีกรดไขมันไม่อิ่มตัวตำแหน่งเดียว (MUFA)">ไขมันที่มีกรดไขมันไม่อิ่มตัวตำแหน่งเดียว (MUFA)</option>
+          <option value="ไขมันที่มีกรดไขมันไม่อิ่มตัวตำแหน่งหลายตำแหน่ง (PUFA)">ไขมันที่มีกรดไขมันไม่อิ่มตัวตำแหน่งหลายตำแหน่ง (PUFA)</option>
+          <option value="ไขมันที่มีกรดไขมันอิ่มตัว (SFA)">ไขมันที่มีกรดไขมันอิ่มตัว (SFA)</option>
+          <option value="น้ำตาล">น้ำตาล</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>ปริมาณ 1 ส่วน (คำอธิบาย) <span style="color:red;">*</span></label>
+        <input type="text" id="inpPortion" placeholder="เช่น 1 ทัพพี, ครึ่งผล">
+      </div>
+      <div class="form-group">
+        <label>น้ำหนัก (กรัม) <span style="color:red;">*</span></label>
+        <input type="text" id="inpWeight" placeholder="ระบุตัวเลข (ถ้าไม่มีให้ใส่ -)">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" onclick="closeModal()">ยกเลิก</button>
+        <button class="btn btn-save" onclick="saveFood()">บันทึกข้อมูล</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ดึง Default Database มาเป็นค่าตั้งต้น -->
+  <script src="food-database.js"></script>
+  <script>
+    let currentDB = [];
+    let editingIndex = -1;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // ตรวจสอบว่ามีข้อมูลใน LocalStorage หรือไม่ ถ้าไม่มีให้ดึงจากไฟล์ foodDatabase
+      const savedDB = localStorage.getItem('customFoodDB');
+      const fallbackDB = (typeof foodDatabase !== 'undefined' && Array.isArray(foodDatabase)) ? foodDatabase : [];
+      if (savedDB) {
+        try {
+          currentDB = JSON.parse(savedDB).flat(Infinity);
+          if (!Array.isArray(currentDB)) throw new Error("Not an array");
+        } catch (e) {
+          currentDB = JSON.parse(JSON.stringify(fallbackDB)).flat(Infinity);
+        }
+      } else {
+        currentDB = JSON.parse(JSON.stringify(fallbackDB)).flat(Infinity); // Clone ป้องกันการแก้ตัวแปรตั้งต้น
+      }
+      renderTable();
+    });
+
+    function renderTable() {
+    applyFilters();
+  }
+
+  function applyFilters() {
+    const searchInput = document.getElementById('searchFood');
+    const keyword = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    
+    const filtered = currentDB.filter(item => {
+      const searchableText = `${item.name} ${item.category}`.toLowerCase();
+      const textWithoutSpace = searchableText.replace(/\s+/g, '');
+      const matchText = keyword === '' || searchableText.includes(keyword) || textWithoutSpace.includes(keyword.replace(/\s+/g, ''));
+      return matchText;
+    });
+    
+    renderTableData(filtered);
+  }
+
+  function renderTableData(data) {
+    const tbody = document.getElementById('foodTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    if (data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" class="center" style="padding: 30px; color: #95a5a6; font-size: 16px;">ไม่พบรายการอาหารที่ค้นหา</td></tr>`;
+      return;
+    }
+    data.forEach(item => {
+      const origIndex = currentDB.indexOf(item);
+      tbody.innerHTML += `
+          <tr>
+            <td style="font-weight: bold; color: var(--text-dark);">${item.name}</td>
+            <td><span class="tag" style="background-color: ${item.tagColor};"></span> ${item.category}</td>
+            <td>${item.portion}</td>
+            <td class="center">${item.weight}</td>
+            <td class="center">
+            <button class="action-btn edit" onclick="openModal(${origIndex})" title="แก้ไข">✏️</button>
+            <button class="action-btn delete" onclick="deleteFood(${origIndex})" title="ลบ">🗑️</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function getTagColor(category) {
+      if (category.includes('นม')) return '#3498db'; // ฟ้า
+      if (category.includes('ผัก')) return '#2ecc71'; // เขียว
+      if (category.includes('ผลไม้')) return '#f39c12'; // ส้ม
+      if (category.includes('ข้าว') || category.includes('แป้ง')) return '#c88a4a'; // น้ำตาล
+      if (category.includes('เนื้อสัตว์')) return '#e74c3c'; // แดง
+      if (category.includes('ไขมัน')) return '#f1c40f'; // เหลือง
+      if (category.includes('น้ำตาล')) return '#bdc3c7'; // เทา
+      return '#95a5a6'; // สีเริ่มต้น
+    }
+
+    function openModal(index = -1) {
+      editingIndex = index;
+      if (index > -1) {
+        document.getElementById('modalTitle').innerText = 'แก้ไขรายการอาหาร';
+        const item = currentDB[index];
+        document.getElementById('inpName').value = item.name;
+        document.getElementById('inpCategory').value = item.category;
+        document.getElementById('inpPortion').value = item.portion;
+        document.getElementById('inpWeight').value = item.weight;
+      } else {
+        document.getElementById('modalTitle').innerText = 'เพิ่มรายการอาหารใหม่';
+        document.getElementById('inpName').value = '';
+        document.getElementById('inpPortion').value = '';
+        document.getElementById('inpWeight').value = '';
+      }
+      document.getElementById('foodModal').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('foodModal').style.display = 'none'; }
+
+    function saveFood() {
+      const name = document.getElementById('inpName').value.trim();
+      const category = document.getElementById('inpCategory').value;
+      const portion = document.getElementById('inpPortion').value.trim();
+      const weight = document.getElementById('inpWeight').value.trim();
+
+      if (!name || !portion || !weight) return alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+
+      const newFood = { name, category, portion, weight, tagColor: getTagColor(category) };
+
+      if (editingIndex > -1) currentDB[editingIndex] = newFood;
+      else currentDB.unshift(newFood); // ดันรายการใหม่ขึ้นบนสุด
+
+      localStorage.setItem('customFoodDB', JSON.stringify(currentDB));
+      renderTable();
+      closeModal();
+    }
+
+    function deleteFood(index) {
+      if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบ "${currentDB[index].name}"?`)) {
+        currentDB.splice(index, 1);
+        localStorage.setItem('customFoodDB', JSON.stringify(currentDB));
+        renderTable();
+      }
+    }
+
+    function resetDatabase() {
+      if (confirm('คำเตือน: ข้อมูลอาหารที่คุณเพิ่มเองจะถูกลบทั้งหมด และกลับไปใช้ข้อมูลตั้งต้นจากระบบ คุณแน่ใจหรือไม่?')) {
+        localStorage.removeItem('customFoodDB');
+        const fallbackDB = (typeof foodDatabase !== 'undefined' && Array.isArray(foodDatabase)) ? foodDatabase : [];
+        currentDB = JSON.parse(JSON.stringify(fallbackDB)).flat(Infinity);
+        renderTable();
+      }
+    }
+  </script>
+</body>
+</html>

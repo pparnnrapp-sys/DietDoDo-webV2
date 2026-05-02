@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DietDoDo - อาหารแลกเปลี่ยน</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;800&family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #dcecc9;
+      --bg-color-light: #f4f9ec;
+      --text-dark: #2c3e50;
+      --text-grey: #7f8c8d;
+      --orange: #f27d16;
+      --green: #86c140;
+      --primary: #86c140;
+      --secondary: #e2f0d9;
+    }
+    
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    
+    body { 
+      font-family: 'Sarabun', sans-serif; 
+      background: #f9fcf5;
+      margin: 0; 
+      padding: 0; 
+      color: var(--text-dark);
+      min-height: 100vh;
+    }
+
+    /* ซ่อนลูกศรขึ้น/ลง ในช่องกรอกตัวเลข (Number Input Spinners) */
+    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+
+    /* เครื่องคิดเลข */
+    .calc-trigger { position: fixed; bottom: 20px; right: 20px; background: #1a1a1a; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,0.3); z-index: 10001; font-size: 24px; user-select: none; transition: transform 0.2s;}
+    .calc-trigger:hover { transform: scale(1.05); }
+    .calc-container { display: none; position: fixed; bottom: 80px; right: 20px; width: 230px; background: #000000; padding: 15px; border-radius: 25px; z-index: 10001; box-shadow: 0 15px 35px rgba(0,0,0,0.4); border: 1px solid #333; font-family: 'Poppins', sans-serif;}
+    .calc-display { width: 100%; height: 55px; background: transparent; color: white; margin-bottom: 10px; text-align: right; padding: 10px; font-size: 32px; font-weight: 300; border:none; box-sizing: border-box; outline: none; letter-spacing: 1px;}
+    .calc-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .calc-btn { width: 100%; aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center; border: none; border-radius: 50%; cursor: pointer; font-size: 20px; font-weight: 500; transition: filter 0.2s; padding: 0;}
+    .calc-btn:active { filter: brightness(1.3); }
+    .calc-btn.num { background: #333333; color: white; }
+    .calc-btn.op { background: #ff9f0a; color: white; font-size: 24px; }
+    .calc-btn.top { background: #a5a5a5; color: black; }
+    .calc-btn.zero { aspect-ratio: auto; grid-column: span 2; border-radius: 30px; padding-left: 20px; justify-content: flex-start; }
+
+    /* Header & Navigation */
+    header { position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 8px 40px; font-family: 'Poppins', sans-serif; background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.6); }
+    .logo-container { width: 180px; max-width: 100%; display: block; transition: transform 0.3s ease, filter 0.3s ease; }
+    .logo-container:hover { transform: translateY(-2px) scale(1.02); filter: drop-shadow(0 5px 15px rgba(255, 255, 255, 0.6)) brightness(1.1); }
+    nav.menu-links { display: flex; gap: 40px; }
+    nav.menu-links a { text-decoration: none; color: var(--text-grey); font-weight: 700; font-size: 18px; letter-spacing: 1.5px; transition: 0.3s; border-bottom: 3px solid transparent; padding-bottom: 5px; }
+    nav.menu-links a:hover, nav.menu-links a.active { color: var(--text-dark); transform: translateY(-2px); border-bottom: 3px solid var(--orange); }
+
+    .app-wrapper { display: flex; justify-content: center; padding: 20px; padding-bottom: 60px; }
+
+    /* Main Container */
+    .app-container { 
+      background: rgba(255, 255, 255, 0.95); width: 100%; max-width: 900px; 
+      border-radius: 24px; box-shadow: 0 15px 40px rgba(0,0,0,0.08); 
+      padding: 40px; border: 3px solid transparent; transition: border-color 0.3s;
+    }
+    .app-container:hover { border-color: rgba(134, 193, 64, 0.3); }
+
+    .app-header { text-align: center; margin-bottom: 30px; }
+    .app-logo { font-family: 'Poppins', sans-serif; font-size: 32px; font-weight: 800; color: var(--text-dark); margin: 0; }
+    .app-subtitle { font-size: 15px; color: var(--text-grey); margin-top: 5px; }
+    .header-line { width: 50px; height: 4px; background: var(--orange); margin: 15px auto; border-radius: 2px; }
+
+    /* Table Styles */
+    .exchange-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 20px; }
+    .exchange-table th, .exchange-table td { 
+      padding: 12px 10px; text-align: center; border-bottom: 1px solid #eee; 
+    }
+    .exchange-table th { 
+      background-color: var(--green); color: #fff; font-weight: bold; font-size: 15px; border-bottom: none;
+    }
+    .exchange-table th:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+    .exchange-table th:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+    .exchange-table th.col-qty { background-color: #7ab33a; /* Darker green for emphasis */ color: #fff; font-size: 16px; font-weight: 800; border-radius: 0; }
+    .exchange-table td { font-size: 15px; }
+    .exchange-table td.group-name { text-align: left; font-weight: bold; color: #2c3e50; display: flex; align-items: center; gap: 10px; }
+    .exchange-table td.col-qty-cell { background-color: #fffaf0; }
+    
+    .input-exchange { 
+      width: 65px; padding: 8px; border: 2px solid var(--orange); border-radius: 8px; 
+      text-align: center; font-size: 16px; font-family: 'Sarabun', sans-serif;
+      transition: 0.3s; font-weight: bold; color: var(--text-dark); background-color: #fff;
+      box-shadow: 0 2px 5px rgba(255, 127, 0, 0.1);
+    }
+    .input-exchange:focus { border-color: var(--green); outline: none; box-shadow: 0 2px 8px rgba(134, 193, 64, 0.3); }
+    .input-exchange::placeholder { color: #ccc; font-weight: normal; }
+
+    /* Note Input */
+    .input-note {
+      width: 100%; padding: 12px 15px; border: 2px solid #eee; border-radius: 12px; 
+      font-size: 15px; font-family: 'Sarabun', sans-serif; transition: 0.3s; 
+      box-sizing: border-box; resize: vertical; color: var(--text-dark);
+    }
+    .input-note:focus { border-color: var(--green); outline: none; box-shadow: 0 2px 8px rgba(134, 193, 64, 0.2); }
+
+    /* Added Food Row Styles */
+    .added-food-row { animation: slideDown 0.3s ease-out; background-color: #fdfdfd; }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    .added-food-name { padding-left: 35px !important; font-weight: normal !important; color: var(--text-grey) !important; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid var(--orange); }
+    .added-food-detail { font-size: 12px; color: #95a5a6; margin-left: 5px; }
+    .btn-delete-row { background: transparent; border: none; color: #e74c3c; cursor: pointer; font-size: 14px; padding: 5px; border-radius: 5px; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+    .btn-delete-row:hover { background: #ffeaea; }
+    .macro-muted { color: #bdc3c7 !important; font-size: 13px !important; }
+
+    /* Modal Styles สำหรับเพิ่มอาหาร */
+    .modal-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items:center; justify-content:center; backdrop-filter: blur(5px); }
+    .modal-content { background: #fff; padding: 30px; border-radius: 16px; width: 90%; max-width: 400px; box-shadow: 0 15px 40px rgba(0,0,0,0.2); animation: slideUp 0.3s ease; text-align: center; }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal-header { font-size: 20px; font-weight: bold; color: var(--green); margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+    .modal-input-group { margin-bottom: 25px; }
+    .modal-input-group label { display: block; font-weight: bold; margin-bottom: 10px; color: var(--text-dark); }
+    .modal-qty-input { width: 120px; padding: 10px; text-align: center; font-size: 20px; border: 2px solid var(--orange); border-radius: 8px; font-weight: bold; outline: none; font-family: 'Sarabun', sans-serif; color: var(--text-dark); }
+    .modal-qty-input:focus { border-color: var(--green); box-shadow: 0 0 10px rgba(134,193,64,0.2); }
+    .modal-actions { display: flex; justify-content: center; gap: 15px; }
+    .btn-cancel { background: #eee; color: #333; padding: 10px 20px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: 'Sarabun', sans-serif; font-size: 15px; }
+    .btn-cancel:hover { background: #e0e0e0; }
+    .btn-confirm { background: var(--orange); color: #fff; padding: 10px 20px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: 'Sarabun', sans-serif; font-size: 15px; box-shadow: 0 4px 10px rgba(255,127,0,0.2); }
+    .btn-confirm:hover { background: #e67e22; transform: translateY(-2px); }
+
+    /* สไตล์เพิ่มเติมสำหรับข้อมูลสารอาหารในป๊อปอัป */
+    .modal-highlight-box { background: #fffaf0; border: 2px dashed var(--orange); padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center; }
+    .modal-highlight-title { font-size: 15px; color: var(--text-grey); font-weight: bold; margin-bottom: 12px; }
+    .modal-highlight-title span { color: var(--orange); font-size: 20px; font-weight: 900; display: block; margin-top: 5px; }
+    .modal-macro-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .modal-macro-item { background: #fff; padding: 10px 5px; border-radius: 8px; border: 1px solid #ffe5b4; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+    .modal-macro-label { font-size: 12px; color: #7f8c8d; font-weight: bold; }
+    .modal-macro-val { font-size: 18px; color: var(--text-dark); font-weight: 900; margin-top: 2px; }
+    .modal-macro-val small { font-size: 12px; color: #95a5a6; font-weight: normal; }
+
+    /* Search Input & Dropdown Styles */
+    .input-search { 
+      width: 100%; padding: 12px 15px; border: 2px solid #eee; border-radius: 12px; 
+      font-size: 15px; font-family: 'Sarabun', sans-serif; transition: 0.3s; 
+      box-sizing: border-box; color: var(--text-dark);
+    }
+    .input-search:focus { border-color: var(--orange); outline: none; box-shadow: 0 2px 8px rgba(255, 127, 0, 0.2); }
+    
+    .search-results-dropdown {
+      display: none; /* ซ่อนไว้ก่อน จะแสดงเมื่อพิมพ์ค้นหา */
+      position: absolute; top: 100%; left: 0; right: 0; 
+      background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+      border: 1px solid #eee; max-height: 250px; overflow-y: auto; 
+      z-index: 1000; margin-top: 5px;
+    }
+    .search-result-item { padding: 12px 15px; border-bottom: 1px solid #f5f5f5; cursor: pointer; transition: background 0.2s; }
+    .search-result-item:last-child { border-bottom: none; }
+    .search-result-item:hover { background: #fffaf0; }
+    .search-result-name { font-weight: bold; color: var(--text-dark); font-size: 16px; }
+    .search-result-cat { font-size: 12px; color: #fff; padding: 2px 8px; border-radius: 10px; margin-left: 8px; vertical-align: middle; }
+    .search-result-portion { color: #7f8c8d; font-size: 14px; margin-top: 4px; display: block; }
+    .search-empty { padding: 15px; text-align: center; color: #95a5a6; font-size: 15px; }
+
+    /* Tag colors for Food Groups */
+    .tag { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+    .tag-milk { background: #3498db; } /* ฟ้า */
+    .tag-veg { background: #2ecc71; } /* เขียว */
+    .tag-fruit { background: #f39c12; } /* ส้ม */
+    .tag-carb { background: #c88a4a; } /* น้ำตาล */
+    .tag-meat { background: #e74c3c; } /* แดง/ชมพู */
+    .tag-fat { background: #f1c40f; } /* เหลือง */
+    .tag-sugar { background: #bdc3c7; } /* เทา */
+
+    /* Dashboard & Target Styles (แทนที่กรอบสรุปผลเดิม) */
+    .dashboard-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 20px; margin-bottom: 20px; }
+    .dash-card { background: #fff; border: 1px solid #eee; border-radius: 16px; padding: 15px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+    .dash-card.energy { border-bottom: 4px solid var(--orange); }
+    .dash-card:nth-child(2) { border-bottom: 4px solid #f1c40f; }
+    .dash-card:nth-child(3) { border-bottom: 4px solid #e67e22; }
+    .dash-card:nth-child(4) { border-bottom: 4px solid #f39c12; }
+    .dash-label { font-size: 15px; color: var(--text-grey); font-weight: bold; margin-bottom: 8px; }
+    .dash-actual { font-size: 26px; font-weight: 800; color: var(--text-dark); margin-bottom: 5px; }
+    .dash-actual .pct-text { font-size: 14px; color: #95a5a6; font-weight: bold; margin-left: 3px; }
+    .dash-target { background: #fff5e6; border: 2px solid #ffb74d; border-radius: 12px; padding: 12px 8px; margin-bottom: 15px; position: relative; }
+    .dash-target-title { font-weight: 900; color: #d35400; margin-bottom: 10px; font-size: 14px; }
+    
+    .target-input-wrapper { position: relative; display: inline-block; }
+    .target-input, .target-pct-input { width: 75px; padding: 6px 22px 6px 5px; text-align: right; border: 2px solid #ffd8a8; border-radius: 8px; font-size: 16px; outline: none; transition: 0.3s; font-family: 'Sarabun', sans-serif; font-weight: bold; color: var(--text-dark); background: #fff; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
+    .target-pct-input { width: 75px; }
+    .target-input:focus, .target-pct-input:focus { border-color: var(--orange); box-shadow: 0 0 0 4px rgba(255, 127, 0, 0.15); background: #fff; }
+    .target-input:disabled, .target-pct-input:disabled { background-color: #f5f5f5 !important; color: #95a5a6; border-color: #e0e0e0; cursor: not-allowed; box-shadow: none; }
+    .floating-unit { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: 900; color: #d35400; pointer-events: none; }
+    .target-input:disabled ~ .floating-unit, .target-pct-input:disabled ~ .floating-unit { color: #95a5a6; }
+    .dash-diff { font-size: 14px; font-weight: bold; }
+    .dash-diff.good { color: #27ae60; }
+    .dash-diff.over { color: #c0392b; }
+    .dash-diff.under { color: #f39c12; }
+
+    .btn-reset { background: #ff0022; color: white; padding: 12px 30px; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; font-family: 'Sarabun', sans-serif; }
+    .btn-reset:hover { transform: translateY(-2px); box-shadow: 0 8px 15px rgba(149, 165, 166, 0.3); }
+
+    @media (max-width: 768px) {
+      header { flex-direction: column; gap: 10px; padding: 10px; }
+      .logo-container { width: 140px; }
+      nav.menu-links { flex-wrap: wrap; justify-content: center; gap: 15px; }
+      nav.menu-links a { font-size: 15px; }
+      .app-container { padding: 20px 15px; }
+      .target-container { flex-direction: column; gap: 15px; }
+      .exchange-table th, .exchange-table td { padding: 8px 5px; font-size: 12px; }
+      .exchange-table th.col-qty { font-size: 13px; }
+      .exchange-table td.group-name { font-size: 12px; gap: 5px; }
+      .input-exchange { width: 50px; padding: 6px; font-size: 14px; }
+      .dashboard-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="logo-container" aria-label="DietDoDo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 150" width="100%" height="auto">
+        <defs>
+          <style>
+            .font-main { font-family: 'Nunito', 'Segoe UI', Tahoma, sans-serif; font-weight: 900; font-size: 100px; fill: #0b0b0b; }
+            .color-green { fill: #86C140; }
+            .color-orange { fill: #F7931E; }
+            @keyframes bounce-dot { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+            .anim-bounce-dot { animation: bounce-dot 1s ease-in-out 3; }
+            @keyframes tree-sway { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+            .anim-tree { animation: tree-sway 1.5s ease-in-out infinite; transform-origin: 30px 25px; }
+          </style>
+        </defs>
+        <text x="20" y="115" class="font-main">D</text>
+        <rect x="110" y="55" width="22" height="60" rx="11" class="color-orange" />
+        <circle cx="121" cy="30" r="12" class="color-green anim-bounce-dot" />
+        <text x="145" y="115" class="font-main">e</text>
+        <text x="210" y="115" class="font-main">t</text>
+        <text x="275" y="115" class="font-main">D</text>
+        <g transform="translate(365, 30)">
+          <path class="anim-tree" d="M 5,25 C 2,15 15,5 30,20 C 35,15 50,5 55,25" fill="none" stroke="#86C140" stroke-width="8" stroke-linecap="round"/>
+          <circle cx="15" cy="45" r="7" class="color-green" />
+          <circle cx="45" cy="45" r="7" class="color-green" />
+          <path d="M 5,60 A 25 20 0 0 0 55,60" fill="none" stroke="#0b0b0b" stroke-width="12" stroke-linecap="round"/>
+        </g>
+        <text x="440" y="115" class="font-main">D</text>
+        <g transform="translate(550, 80)">
+          <circle cx="0" cy="8" r="22" fill="none" stroke="#0b0b0b" stroke-width="16" />
+        </g>
+      </svg>
+    </a>
+    <nav class="menu-links">
+      <a href="index.html">HOME</a>
+      <a href="menu.html" class="active">MENU</a>
+      <a href="about.html">ABOUT</a>
+    </nav>
+  </header>
+
+  <div class="app-wrapper">
+  <div class="app-container">
+    <div class="app-header">
+      <h1 class="app-logo">FOOD EXCHANGE</h1>
+      <div class="header-line"></div>
+      <p class="app-subtitle">จัดการสัดส่วนและคำนวณพลังงานจากหมวดอาหารแลกเปลี่ยน</p>
+    </div>
+
+    <!-- กล่องบันทึกเพิ่มเติม (บนสุด) -->
+    <div style="margin-bottom: 25px;">
+      <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #34495e;">📝 บันทึกทั่วไป / รายละเอียด</label>
+      <textarea id="memoNote" class="input-note" rows="2" placeholder="เช่น ชื่อผู้รับคำปรึกษา, วันที่, หรือเป้าหมายการจัดอาหาร..."></textarea>
+    </div>
+
+    <!-- กล่องค้นหาข้อมูลอาหาร (Food Search) -->
+    <div class="search-food-container" style="margin-bottom: 25px; position: relative; z-index: 100;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
+        <label style="font-weight: bold; color: #34495e; margin: 0;">🔍 ค้นหาปริมาณอาหาร 1 ส่วน</label>
+        <button type="button" onclick="openAddMenuModal({ menuName: 'เพิ่มรายการกำหนดเอง', ingredients: [] })" style="background: none; border: none; color: var(--orange); font-weight: bold; cursor: pointer; font-family: 'Sarabun', sans-serif; font-size: 14px; text-decoration: underline; padding: 0;">+ เพิ่มแคลอรี/กำหนดเอง</button>
+      </div>
+      <input type="text" id="foodSearchInput" class="input-search" placeholder="พิมพ์ชื่ออาหารเพื่อค้นหา...">
+      <div id="searchResults" class="search-results-dropdown"></div>
+    </div>
+
+    <div style="overflow-x: auto;">
+      <table class="exchange-table" id="exchangeTable">
+        <thead>
+          <tr>
+            <th>หมวดอาหาร</th>
+            <th class="col-qty">จำนวน (ส่วน)</th>
+            <th>คาร์โบไฮเดรต (g)</th>
+            <th>โปรตีน (g)</th>
+            <th>ไขมัน (g)</th>
+            <th>พลังงาน (Kcal)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- ข้าว-แป้ง -->
+          <tr class="main-category-row" data-category-name="ข้าว-แป้ง" data-c="18" data-p="2" data-f="0" data-k="80">
+            <td class="group-name"><span class="tag tag-carb"></span> ข้าว-แป้ง</td>
+            <td class="col-qty-cell"><input type="number" class="input-exchange" min="0" step="0.25" placeholder="0" oninput="calculateTotals()"></td>
+            <td>18</td><td>2</td><td>-</td><td>80</td>
+          </tr>
+          
+          <!-- ผัก ก. / ผัก ข. -->
+          <tr class="main-category-row" data-category-name="ผัก ก." data-c="0" data-p="0" data-f="0" data-k="0">
+            <td class="group-name"><span class="tag tag-veg"></span> ผัก ก. </td>
+            <td class="col-qty-cell"><input type="number" class="input-exchange" min="0" step="0.25" placeholder="0" oninput="calculateTotals()"></td>
+            <td>0</td><td>0</td><td>-</td><td>0</td>
+          </tr>
+          <tr class="main-category-row" data-category-name="ผัก ข." data-c="5" data-p="2" data-f="0" data-k="25">
+            <td class="group-name"><span class="tag tag-veg"></span> ผัก ข.</td>
+            <td class="col-qty-cell"><input type="number" class="input-exchange" min="0" step="0.25" placeholder="0" oninput="calculateTotals()"></td>
+            <td>5</td><td>2</td><td>-</td><td>25</td>
+          </tr>
+
+          <!-- ผลไม้ -->
+          <tr class="main-category-row" data-category-name="ผลไม้" data-c="15" data-p="0" data-f="0" data-k="60">
+            <td class="group-name"><span class="tag tag-fruit"></span> ผลไม้</td>
+            <td class="col-qty-cell"><input type="number" class="input-exchange" min="0" step="0.25" placeholder="0" oninput="calculateTotals()"></td>
+            <td>15</td><td>-</td><td>-</td><td>60</td>
+          </tr>
+
+          <!-- เนื้อสัตว์ -->
+          <tr class="main-category-row" data-category-name="เนื้อสัตว์ (ไขมันต่ำมาก)" data-c="0" data-p="7" data-f="1" data-k="35">
+            <td class="group-name"><span class="tag tag-meat"></span> เนื้อสัตว์ (ไขมันต่ำมาก)</td>
+            <td class="col-qty-cell"><input type="number" class="input-exchange" min="0" step="0.25" placeholder="0" oninput="calculateTotals()"></td>
+            <td>-</td><td>7</td><td>1</td><td>35</td>
+          </tr>
+          <tr class="main-category-row" data-category-name="เนื้อสัตว์ (ไขมันต่ำ)" data-c="0" data-p="7" data-f="3" data-k="55">
+            <td class="group-name"><span class="tag tag-meat"></span> เนื้อสัตว์ (ไขมันต่ำ)</td>
+            <td class="col-qty-cell"><input type="number" class="input-exchange" min="0" step="0.25" placeholder="0" oninput="calculateTotals()"></td>
+            <td>-</td><td>7</td><td>3</td><td>55</td>
+          </tr>
+          <tr class="main-category-row" data-category-name="เนื้อสัตว์ (ไขมันปานกลาง)" data-c="0" data-p="7" data-f="5" data-k="75">
+            <td class="group-name"><span class="tag tag-meat"></span> เนื้อสัตว์ (ไขมันกลาง)</td>
+            <td class="col-qty-cell"><input type="number" class="input-exchange" min="0" step="0.25" placeholder="0" oninput="calculateTotals()"></td>
+            <td>-</td><td>7</td><td>5</td><td>75</td>
+          </tr>
+          <tr class="main-category-row" data-category-name="เนื้อสัตว์ (ไขมันสูง)" data-c="0" data-p="7" data-f="8" data-k="100">
+            <td class="group-name"><span class="tag tag-meat"></span> เนื้อสัตว์ (ไขมันสูง)</td>
+            <td class="col-qty-cell"><input type="number" class="input-exchange" min="0" step="0.25" placeholder="0" oninput="calculateTotals()"></td>
+            <td>-</td><td>7</td><td>8</td><td>100</td>
+          </tr>
+
+          <!-- นม -->
+          <tr class="main-category-row" data-category-name="นมขาดมันเนย" data-c="12" data-p="8" data-f="0" data-k="90">
+            <td class="group-name"><span class="tag tag-milk"></span> นมขาดมันเนย</td>
+            <td class="col-qty-cell"><input type="number" class="input-exchange" min="0" step="0.25" placeholder="0" oninput="calculateTotals()"></td>
+            <td>12</td><td>8</td><td>0</td><td>90</td>
+          </tr>
+          <tr class="main-category-row" data-category-name="นมพร่องมันเนย" data-c="12" data-p="8" data-f="5" data-k="120">
+            <td class="group-name"><span class="tag tag-milk"></span> นมพร่องมันเนย</td>
+            <td class="col-qty-cell"><input type="number" class="input-exchange" min="0" step="0.25" placeholder="0" oninput="calculateTotals()"></td>
+            <td>12</td><td>8</td><td>5</td><td>120</td>
+          </tr>
+          <tr class="main-category-row" data-category-name="นมเต็มส่วน" data-c="12" data-p="8" data-f="8" data-k="150">
+            <td class="group-name"><span class="tag tag-milk"></span> นมเต็มส่วน</td>
+            <td class="col-qty-cell"><input type="number" class="input-exchange" min="0" step="0.25" placeholder="0" oninput="calculateTotals()"></td>
+            <td>12</td><td>8</td><td>8</td><td>150</td>
+          </tr>
+          
+          <!-- ไขมัน -->
+          <tr class="main-category-row" data-category-name="ไขมันที่มีกรดไขมันไม่อิ่มตัวตำแหน่งเดียว (MUFA)" data-c="0" data-p="0" data-f="5" data-k="45">
+            <td class="group-name"><span class="tag tag-fat"></span> ไขมันที่มีกรดไขมันไม่อิ่มตัวตำแหน่งเดียว (MUFA)</td>
+            <td class="col-qty-cell"><input type="number" class="input-exchange" min="0" step="0.25" placeholder="0" oninput="calculateTotals()"></td>
+            <td>-</td><td>-</td><td>5</td><td>45</td>
+          </tr>
+          <tr class="main-category-row" data-category-name="ไขมันที่มีกรดไขมันไม่อิ่มตัวตำแหน่งหลายตำแหน่ง (PUFA)" data-c="0" data-p="0" data-f="5" data-k="45">
+            <td class="group-name"><span class="tag tag-fat"></span> ไขมันที่มีกรดไขมันไม่อิ่มตัวตำแหน่งหลายตำแหน่ง (PUFA)</td>
+            <td class="col-qty-cell"><input type="number" class="input-exchange" min="0" step="0.25" placeholder="0" oninput="calculateTotals()"></td>
+            <td>-</td><td>-</td><td>5</td><td>45</td>
+          </tr>
+          <tr class="main-category-row" data-category-name="ไขมันที่มีกรดไขมันอิ่มตัว (SFA)" data-c="0" data-p="0" data-f="5" data-k="45">
+            <td class="group-name"><span class="tag tag-fat"></span> ไขมันที่มีกรดไขมันอิ่มตัว (SFA)</td>
+            <td class="col-qty-cell"><input type="number" class="input-exchange" min="0" step="0.25" placeholder="0" oninput="calculateTotals()"></td>
+            <td>-</td><td>-</td><td>5</td><td>45</td>
+          </tr>
+          
+          <!-- น้ำตาล -->
+          <tr class="main-category-row" data-category-name="น้ำตาล" data-c="4" data-p="0" data-f="0" data-k="20">
+            <td class="group-name"><span class="tag tag-sugar"></span> น้ำตาล</td>
+            <td class="col-qty-cell"><input type="number" class="input-exchange" min="0" step="0.25" placeholder="0" oninput="calculateTotals()"></td>
+            <td>4</td><td>-</td><td>-</td><td>20</td>
+          </tr>
+          <!-- รายการกำหนดเอง -->
+          <tr class="main-category-row" data-category-name="รายการกำหนดเอง" data-c="0" data-p="0" data-f="0" data-k="0">
+            <td class="group-name"><span class="tag" style="background:#95a5a6;"></span> รายการกำหนดเอง</td>
+            <td class="col-qty-cell"><input type="number" class="input-exchange" min="0" step="0.25" placeholder="0" disabled style="background:#f5f5f5; border-color:#eee;"></td>
+            <td>-</td><td>-</td><td>-</td><td>-</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Dashboard สรุปผลและเป้าหมาย -->
+    <div class="dashboard-grid" id="macroDashboard">
+      <!-- พลังงานรวม -->
+      <div class="dash-card energy">
+        <div class="dash-label">พลังงานรวม (Kcal)</div>
+        <div class="dash-actual" id="sumKcal">0</div>
+        <div class="dash-target">
+          <div class="dash-target-title">🎯 เป้าหมาย</div>
+          <div class="target-input-wrapper">
+            <input type="number" id="inpKcal" oninput="updateTargetFromKcal()" class="target-input" style="width: 110px; padding-right: 35px;">
+            <span class="floating-unit" style="right: 10px;">kcal</span>
+          </div>
+        </div>
+        <div class="dash-diff" id="diffKcal">-</div>
+      </div>
+      <!-- คาร์โบไฮเดรต -->
+      <div class="dash-card">
+        <div class="dash-label">คาร์โบไฮเดรต (g)</div>
+        <div class="dash-actual"><span id="sumCarb">0</span> <span id="pctCarb" class="pct-text">(0%)</span></div>
+        <div class="dash-target">
+          <div class="dash-target-title">🎯 เป้าหมาย</div>
+          <div style="display: flex; justify-content: center; align-items: center; gap: 4px;">
+            <div class="target-input-wrapper">
+              <input type="number" id="inpCarbPct" oninput="updateTargetFromPct('Carb', 4)" class="target-pct-input">
+              <span class="floating-unit">%</span>
+            </div>
+            <span style="color:#bdc3c7; font-weight:bold; font-size:14px;">=</span>
+            <div class="target-input-wrapper">
+              <input type="number" id="inpCarb" oninput="updateTargetFromGram('Carb', 4)" class="target-input">
+              <span class="floating-unit">g</span>
+            </div>
+          </div>
+        </div>
+        <div class="dash-diff" id="diffCarb">-</div>
+      </div>
+      <!-- โปรตีน -->
+      <div class="dash-card">
+        <div class="dash-label">โปรตีน (g)</div>
+        <div class="dash-actual"><span id="sumPro">0</span> <span id="pctPro" class="pct-text">(0%)</span></div>
+        <div class="dash-target">
+          <div class="dash-target-title">🎯 เป้าหมาย</div>
+          <div style="display: flex; justify-content: center; align-items: center; gap: 4px;">
+            <div class="target-input-wrapper">
+              <input type="number" id="inpProPct" oninput="updateTargetFromPct('Pro', 4)" class="target-pct-input">
+              <span class="floating-unit">%</span>
+            </div>
+            <span style="color:#bdc3c7; font-weight:bold; font-size:14px;">=</span>
+            <div class="target-input-wrapper">
+              <input type="number" id="inpPro" oninput="updateTargetFromGram('Pro', 4)" class="target-input">
+              <span class="floating-unit">g</span>
+            </div>
+          </div>
+        </div>
+        <div class="dash-diff" id="diffPro">-</div>
+      </div>
+      <!-- ไขมัน -->
+      <div class="dash-card">
+        <div class="dash-label">ไขมัน (g)</div>
+        <div class="dash-actual"><span id="sumFat">0</span> <span id="pctFat" class="pct-text">(0%)</span></div>
+        <div class="dash-target">
+          <div class="dash-target-title">🎯 เป้าหมาย</div>
+          <div style="display: flex; justify-content: center; align-items: center; gap: 4px;">
+            <div class="target-input-wrapper">
+              <input type="number" id="inpFatPct" oninput="updateTargetFromPct('Fat', 9)" class="target-pct-input">
+              <span class="floating-unit">%</span>
+            </div>
+            <span style="color:#bdc3c7; font-weight:bold; font-size:14px;">=</span>
+            <div class="target-input-wrapper">
+              <input type="number" id="inpFat" oninput="updateTargetFromGram('Fat', 9)" class="target-input">
+              <span class="floating-unit">g</span>
+            </div>
+          </div>
+        </div>
+        <div class="dash-diff" id="diffFat">-</div>
+      </div>
+    </div>
+
+    <!-- คำเตือนเปอร์เซ็นต์เป้าหมาย -->
+    <div id="macroTargetWarning" style="color: #e74c3c; font-size: 14px; font-weight: bold; margin-bottom: 20px; display: none; background: #fdf5f5; padding: 10px; border-radius: 8px; border: 1px solid #fadbd8; text-align: center;">
+      ⚠️ คำเตือน: สัดส่วนเปอร์เซ็นต์เป้าหมายรวมกันยังไม่เท่ากับ 100% (ปัจจุบัน: <span id="totalMacroPctShow">0</span>%)
+    </div>
+
+    <!-- กล่องปุ่มด้านล่างสุด -->
+    <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px dashed #eee;">
+      <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+        <button type="button" class="btn-reset" onclick="resetTable()">รีเซ็ตค่าทั้งหมด</button>
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSctOA13lNIUZmA1gnrhWXGYO0Pix-l-BlASNTvhxnHgNh1hvQ/viewform" target="_blank" style="padding: 12px 30px; background-color: #3498db; color: white; border: none; border-radius: 12px; cursor: pointer; font-family: 'Sarabun', sans-serif; font-size: 16px; font-weight: bold; text-decoration: none; transition: 0.3s; box-shadow: 0 4px 10px rgba(52, 152, 219, 0.2); display: inline-block;">
+          💡 แจ้งผู้พัฒนาเพิ่มข้อมูล
+        </a>
+      </div>
+    </div>
+
+  </div>
+  </div>
+
+  <!-- Modal ยืนยันการเพิ่มอาหาร -->
+  <div class="modal-overlay" id="addFoodModal">
+    <div class="modal-content">
+      <div class="modal-header">➕ เพิ่มลงในตารางคำนวณ</div>
+      <div id="modalFoodName"></div>
+      <div class="modal-input-group">
+        <label>ระบุจำนวน (ส่วน)</label>
+        <input type="number" id="modalFoodQty" class="modal-qty-input" min="0" step="0.25" value="1">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeAddFoodModal()">ยกเลิก</button>
+        <button class="btn-confirm" onclick="confirmAddFood()">เพิ่มลงตาราง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal ยืนยันการเพิ่มเมนูอาหาร -->
+  <div class="modal-overlay" id="addMenuModal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">🍲 ยืนยันการเพิ่มเมนูอาหาร</div>
+      <div id="modalMenuName" style="font-size: 24px; color: var(--text-dark); font-weight: 900; margin-bottom: 10px;"></div>
+      <div style="font-size: 14px; color: var(--text-grey); margin-bottom: 15px; text-align: left;">
+        <strong>ปรับลด/เพิ่มปริมาณวัตถุดิบได้ตามต้องการ:</strong>
+        <ul id="modalMenuIngredients" style="list-style: none; padding-left: 0; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; max-height: 250px; overflow-y: auto;"></ul>
+        
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc;">
+          <strong style="display:block; margin-bottom: 8px; color: var(--green);">+ เพิ่มวัตถุดิบอื่น (ค้นหา หรือกำหนดเอง):</strong>
+          <div style="position: relative; margin-bottom: 8px;">
+            <input type="text" id="modalFoodSearchInput" class="input-search" placeholder="พิมพ์ชื่ออาหาร..." style="font-size: 14px; padding: 8px 12px;" oninput="doModalSearch()" onfocus="doModalSearch()">
+            <div id="modalFoodSearchResults" class="search-results-dropdown" style="max-height: 150px; font-size: 14px; z-index: 2001;"></div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 8px; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px solid #eee;">
+            <div style="font-size: 12px; color: var(--text-grey); font-weight: bold; grid-column: span 5; margin-bottom: -4px;">กรณีไม่พบอาหารในระบบ: กำหนดสารอาหารเอง (ต่อ 1 ส่วน)</div>
+            <input type="text" id="modalCustomName" class="input-search" placeholder="พิมพ์ชื่อวัตถุดิบที่ต้องการ..." style="font-size: 13px; padding: 6px; grid-column: span 5;">
+            <input type="number" id="modalCustomCarb" class="input-search" placeholder="Carb (g)" style="font-size: 13px; padding: 6px;" min="0" oninput="calculateCustomKcal()">
+            <input type="number" id="modalCustomPro" class="input-search" placeholder="Pro (g)" style="font-size: 13px; padding: 6px;" min="0" oninput="calculateCustomKcal()">
+            <input type="number" id="modalCustomFat" class="input-search" placeholder="Fat (g)" style="font-size: 13px; padding: 6px;" min="0" oninput="calculateCustomKcal()">
+            <input type="number" id="modalCustomKcal" class="input-search" placeholder="Kcal" style="font-size: 13px; padding: 6px;" min="0">
+            <button type="button" class="btn-confirm" onclick="addCustomModalIngredient()" style="padding: 6px 12px; font-size: 13px; min-width: 60px;">เพิ่ม</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeAddMenuModal()">ยกเลิก</button>
+        <button class="btn-confirm" onclick="confirmAddMenu()">เพิ่มลงตาราง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- เครื่องคิดเลขลอย -->
+  <div class="calc-trigger" onclick="toggleCalc()">🖩</div>
+  <div id="miniCalc" class="calc-container">
+    <input type="text" id="calcDisplay" class="calc-display" readonly value="">
+    <div class="calc-buttons">
+      <button type="button" class="calc-btn top" onclick="clearCalc()">AC</button>
+      <button type="button" class="calc-btn top" onclick="backspaceCalc()">⌫</button>
+      <button type="button" class="calc-btn top" onclick="percentCalc()">%</button>
+      <button type="button" class="calc-btn op" onclick="pressCalc('/')">÷</button>
+      
+      <button type="button" class="calc-btn num" onclick="pressCalc('7')">7</button>
+      <button type="button" class="calc-btn num" onclick="pressCalc('8')">8</button>
+      <button type="button" class="calc-btn num" onclick="pressCalc('9')">9</button>
+      <button type="button" class="calc-btn op" onclick="pressCalc('*')">×</button>
+      
+      <button type="button" class="calc-btn num" onclick="pressCalc('4')">4</button>
+      <button type="button" class="calc-btn num" onclick="pressCalc('5')">5</button>
+      <button type="button" class="calc-btn num" onclick="pressCalc('6')">6</button>
+      <button type="button" class="calc-btn op" onclick="pressCalc('-')">−</button>
+      
+      <button type="button" class="calc-btn num" onclick="pressCalc('1')">1</button>
+      <button type="button" class="calc-btn num" onclick="pressCalc('2')">2</button>
+      <button type="button" class="calc-btn num" onclick="pressCalc('3')">3</button>
+      <button type="button" class="calc-btn op" onclick="pressCalc('+')">+</button>
+      
+      <button type="button" class="calc-btn num zero" onclick="pressCalc('0')">0</button>
+      <button type="button" class="calc-btn num" onclick="pressCalc('.')">.</button>
+      <button type="button" class="calc-btn op" onclick="solveCalc()">=</button>
+    </div>
+  </div>
+
+  <!-- นำเข้าไฟล์ฐานข้อมูลอาหาร -->
+  <script src="food-database.js"></script>
+  <!-- นำเข้าไฟล์ฐานข้อมูลเมนูอาหาร -->
+  <script src="menu-database.js"></script>
+
+  <script>
+    let tempSelectedFood = null;
+    let tempSelectedMenu = null;
+
+    function openAddFoodModal(food) {
+      tempSelectedFood = food;
+      
+      // ค้นหาข้อมูล Macro จากตารางหลัก
+      const parentRow = document.querySelector(`tr.main-category-row[data-category-name="${food.category}"]`);
+      let c = "-", p = "-", f = "-", k = "-";
+      if (parentRow) {
+        c = parentRow.getAttribute('data-c');
+        p = parentRow.getAttribute('data-p');
+        f = parentRow.getAttribute('data-f');
+        k = parentRow.getAttribute('data-k');
+      }
+
+      const weightText = (food.weight && food.weight !== '-' && food.weight !== '0') ? ` (${food.weight}g)` : '';
+      
+      document.getElementById('modalFoodName').innerHTML = `
+        <div style="font-size: 24px; color: var(--text-dark); font-weight: 900; margin-bottom: 15px;">${food.name}</div>
+        <div class="modal-highlight-box">
+          <div class="modal-highlight-title">หมวด: ${food.category} <span>1 ส่วน = ${food.portion}${weightText}</span></div>
+          <div class="modal-macro-grid">
+            <div class="modal-macro-item"><div class="modal-macro-label">พลังงาน</div><div class="modal-macro-val">${k}<small> kcal</small></div></div>
+            <div class="modal-macro-item"><div class="modal-macro-label">คาร์บ</div><div class="modal-macro-val">${c}<small> g</small></div></div>
+            <div class="modal-macro-item"><div class="modal-macro-label">โปรตีน</div><div class="modal-macro-val">${p}<small> g</small></div></div>
+            <div class="modal-macro-item"><div class="modal-macro-label">ไขมัน</div><div class="modal-macro-val">${f}<small> g</small></div></div>
+          </div>
+        </div>
+      `;
+      document.getElementById('modalFoodQty').value = 1; // ค่าตั้งต้นคือ 1 ส่วน
+      document.getElementById('addFoodModal').style.display = 'flex';
+    }
+
+    function closeAddFoodModal() {
+      document.getElementById('addFoodModal').style.display = 'none';
+      tempSelectedFood = null;
+    }
+
+    function confirmAddFood() {
+      const qty = parseFloat(document.getElementById('modalFoodQty').value) || 0;
+      if (tempSelectedFood && qty > 0) {
+        addFoodToTable(tempSelectedFood, qty);
+      }
+      closeAddFoodModal();
+    }
+
+    function openAddMenuModal(menu) {
+      // สร้างสำเนาข้อมูล (Deep Copy) เพื่อเวลาผู้ใช้กดแก้ไข จะได้ไม่กระทบกับฐานข้อมูลดั้งเดิม
+      tempSelectedMenu = JSON.parse(JSON.stringify(menu));
+      renderMenuModalIngredients();
+      document.getElementById('addMenuModal').style.display = 'flex';
+    }
+
+    // ฟังก์ชันวาดรายการวัตถุดิบใน Modal ใหม่ (มีช่องกรอกและปุ่มลบ)
+    function renderMenuModalIngredients() {
+      document.getElementById('modalMenuName').innerText = `🍲 ${tempSelectedMenu.menuName}`;
+      const ul = document.getElementById('modalMenuIngredients');
+      ul.innerHTML = '';
+      
+      tempSelectedMenu.ingredients.forEach((ing, index) => {
+        const li = document.createElement('li');
+        li.style.display = 'flex';
+        li.style.justifyContent = 'space-between';
+        li.style.alignItems = 'center';
+        li.style.marginBottom = '8px';
+        li.style.borderBottom = '1px dashed #eee';
+        li.style.paddingBottom = '8px';
+
+        let customMacroText = '';
+        if (ing.c !== undefined) {
+          customMacroText = `<br><span style="color:#d35400; font-size: 11px;">(C:${ing.c} P:${ing.p} F:${ing.f} Kcal:${ing.k})</span>`;
+        }
+
+        li.innerHTML = `
+          <div style="flex-grow: 1;">
+            <div style="font-weight: bold; color: var(--text-dark);">${ing.name}</div>
+            <div style="font-size: 12px; color: var(--text-grey);">${ing.category} <span style="color:#95a5a6;">(1 ส่วน = ${ing.portion})</span>${customMacroText}</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input type="number" min="0" step="0.25" class="input-exchange" style="width: 65px; padding: 4px; font-size: 14px;" value="${ing.qty}" onchange="updateTempMenuQty(${index}, this.value)">
+            <span style="font-size: 12px; color: #7f8c8d;">ส่วน</span>
+            <button type="button" class="btn-delete-row" onclick="removeTempMenuIngredient(${index})" style="padding: 4px 8px; margin-left: 5px;" title="ลบ">✖</button>
+          </div>
+        `;
+        ul.appendChild(li);
+      });
+      
+      if(tempSelectedMenu.ingredients.length === 0) {
+         ul.innerHTML = '<div style="text-align:center; color:#e74c3c; padding:10px; font-weight:bold;">ยังไม่มีวัตถุดิบ กรุณาค้นหาและเพิ่มจากช่องด้านล่าง 👇</div>';
+      }
+    }
+
+    function updateTempMenuQty(index, val) {
+      if(tempSelectedMenu && tempSelectedMenu.ingredients[index]) {
+        tempSelectedMenu.ingredients[index].qty = parseFloat(val) || 0;
+      }
+    }
+
+    function removeTempMenuIngredient(index) {
+      if(tempSelectedMenu && tempSelectedMenu.ingredients[index]) {
+        tempSelectedMenu.ingredients.splice(index, 1);
+        renderMenuModalIngredients(); // วาดหน้าจอใหม่หลังลบ
+      }
+    }
+
+    function doModalSearch() {
+      const searchInput = document.getElementById('modalFoodSearchInput');
+      const searchResults = document.getElementById('modalFoodSearchResults');
+      const rawInput = searchInput.value.trim();
+      const inputText = rawInput.toLowerCase();
+
+      if (inputText === '') {
+        searchResults.style.display = 'none';
+        searchResults.innerHTML = '';
+        return;
+      }
+
+      const searchKeywords = inputText.split(' ').filter(kw => kw.trim() !== '');
+      const flatFoodDB = (typeof foodDatabase !== 'undefined' && Array.isArray(foodDatabase)) ? foodDatabase.flat(Infinity) : [];
+      
+      const filteredFoods = flatFoodDB.filter(food => {
+        if (!food || typeof food !== 'object') return false; 
+        const name = food.name ? food.name.toString().toLowerCase() : '';
+        const cat = food.category ? food.category.toString().toLowerCase() : '';
+        const searchableText = `${name} ${cat}`;
+        const textWithoutSpace = searchableText.replace(/\s+/g, ''); 
+        return searchKeywords.every(kw => searchableText.includes(kw) || textWithoutSpace.includes(kw));
+      });
+
+      searchResults.innerHTML = '';
+      if (filteredFoods.length > 0) {
+        filteredFoods.forEach(food => {
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'search-result-item';
+          itemDiv.innerHTML = `<span class="search-result-name">${food.name}</span> <span style="font-size:12px; color:#7f8c8d;">(${food.category})</span>`;
+          itemDiv.addEventListener('click', () => { 
+            if(tempSelectedMenu) {
+              tempSelectedMenu.ingredients.push({
+                name: food.name,
+                category: food.category,
+                portion: food.portion,
+                qty: 1, // ค่าตั้งต้นคือ 1 ส่วน
+                weight: food.weight || '-'
+              });
+              renderMenuModalIngredients();
+            }
+            searchInput.value = '';
+            searchResults.style.display = 'none';
+          });
+          searchResults.appendChild(itemDiv);
+        });
+        searchResults.style.display = 'block';
+      } else {
+        searchResults.innerHTML = `<div class="search-empty" style="padding: 10px;">ไม่พบ "${rawInput}"</div>`;
+        searchResults.style.display = 'block';
+      }
+    }
+
+    // ปิดหน้าต่างค้นหาป๊อปอัปเมื่อคลิกข้างนอก
+    document.addEventListener('click', function(e) {
+      const modalSearchInput = document.getElementById('modalFoodSearchInput');
+      const modalSearchResults = document.getElementById('modalFoodSearchResults');
+      if (modalSearchInput && modalSearchResults && !modalSearchInput.contains(e.target) && !modalSearchResults.contains(e.target)) {
+        modalSearchResults.style.display = 'none';
+      }
+    });
+
+    function closeAddMenuModal() {
+      document.getElementById('addMenuModal').style.display = 'none';
+      tempSelectedMenu = null;
+      // ล้างข้อมูลช่องค้นหาทุกครั้งที่ปิดป๊อปอัป
+      const modalSearch = document.getElementById('modalFoodSearchInput');
+      if (modalSearch) modalSearch.value = '';
+      const modalRes = document.getElementById('modalFoodSearchResults');
+      if (modalRes) modalRes.style.display = 'none';
+      const nameInp = document.getElementById('modalCustomName');
+      if (nameInp) nameInp.value = '';
+      const cInp = document.getElementById('modalCustomCarb');
+      if (cInp) cInp.value = '';
+      const pInp = document.getElementById('modalCustomPro');
+      if (pInp) pInp.value = '';
+      const fInp = document.getElementById('modalCustomFat');
+      if (fInp) fInp.value = '';
+      const kInp = document.getElementById('modalCustomKcal');
+      if (kInp) kInp.value = '';
+    }
+
+    function calculateCustomKcal() {
+      const cRaw = document.getElementById('modalCustomCarb').value;
+      const pRaw = document.getElementById('modalCustomPro').value;
+      const fRaw = document.getElementById('modalCustomFat').value;
+      
+      // ถ้าข้อมูลว่างทุกช่อง ให้ล้างช่อง Kcal ด้วย (ผู้ใช้สามารถพิมพ์เองทีหลังได้)
+      if (cRaw === '' && pRaw === '' && fRaw === '') {
+        document.getElementById('modalCustomKcal').value = '';
+        return;
+      }
+
+      const c = parseFloat(cRaw) || 0;
+      const p = parseFloat(pRaw) || 0;
+      const f = parseFloat(fRaw) || 0;
+
+      document.getElementById('modalCustomKcal').value = Math.round((c * 4) + (p * 4) + (f * 9));
+    }
+
+    function addCustomModalIngredient() {
+      let nameInput = '';
+      const customNameInput = document.getElementById('modalCustomName');
+      if (customNameInput) nameInput = customNameInput.value.trim();
+      // เผื่อผู้ใช้ไปพิมพ์ในช่องค้นหาแต่ลืมพิมพ์ในช่องนี้
+      if (!nameInput) nameInput = document.getElementById('modalFoodSearchInput').value.trim();
+      
+      const cRaw = document.getElementById('modalCustomCarb').value;
+      const pRaw = document.getElementById('modalCustomPro').value;
+      const fRaw = document.getElementById('modalCustomFat').value;
+      const kRaw = document.getElementById('modalCustomKcal').value;
+
+      if (!nameInput) {
+        alert('กรุณาพิมพ์ชื่อวัตถุดิบที่ต้องการเพิ่ม');
+        if (customNameInput) customNameInput.focus();
+        return;
+      }
+      if (cRaw === '' && pRaw === '' && fRaw === '' && kRaw === '') {
+        alert('กรุณาระบุสารอาหารอย่างน้อย 1 ช่อง (Carb, Pro, Fat, หรือ Kcal)');
+        return;
+      }
+
+      const c = parseFloat(cRaw) || 0;
+      const p = parseFloat(pRaw) || 0;
+      const f = parseFloat(fRaw) || 0;
+      
+      let k = parseFloat(kRaw);
+      if (isNaN(k)) {
+        k = (c * 4) + (p * 4) + (f * 9);
+      }
+
+      if(tempSelectedMenu) {
+        tempSelectedMenu.ingredients.push({
+          name: nameInput,
+          category: 'รายการกำหนดเอง',
+          portion: '1 ส่วน',
+          qty: 1,
+          weight: '-',
+          c: c,
+          p: p,
+          f: f,
+          k: k
+        });
+        renderMenuModalIngredients();
+      }
+      
+      document.getElementById('modalFoodSearchInput').value = '';
+      if (document.getElementById('modalCustomName')) document.getElementById('modalCustomName').value = '';
+      document.getElementById('modalCustomCarb').value = '';
+      document.getElementById('modalCustomPro').value = '';
+      document.getElementById('modalCustomFat').value = '';
+      if (document.getElementById('modalCustomKcal')) document.getElementById('modalCustomKcal').value = '';
+    }
+
+    function confirmAddMenu() {
+      if (tempSelectedMenu) {
+        tempSelectedMenu.ingredients.forEach(ing => addFoodToTable(ing, ing.qty));
+      }
+      closeAddMenuModal();
+    }
+
+    function addFoodToTable(food, qty) {
+      const parentRow = document.querySelector(`tr.main-category-row[data-category-name="${food.category}"]`);
+      if (!parentRow) {
+        alert(`ไม่พบหมวดหมู่ "${food.category}" ในตารางหลัก\n(โปรดเช็คข้อมูลอาหารในระบบจัดการว่าพิมพ์หมวดหมู่ถูกต้องหรือไม่)`);
+        return;
+      }
+
+      const c = food.c !== undefined ? food.c : parentRow.getAttribute('data-c');
+      const p = food.p !== undefined ? food.p : parentRow.getAttribute('data-p');
+      const f = food.f !== undefined ? food.f : parentRow.getAttribute('data-f');
+      const k = food.k !== undefined ? food.k : parentRow.getAttribute('data-k');
+
+      const newRow = document.createElement('tr');
+      newRow.className = 'added-food-row';
+      newRow.setAttribute('data-c', c);
+      newRow.setAttribute('data-p', p);
+      newRow.setAttribute('data-f', f);
+      newRow.setAttribute('data-k', k);
+
+      const weightText = (food.weight && food.weight !== '-' && food.weight !== '0') ? `(${food.weight}g)` : '';
+
+      newRow.innerHTML = `
+        <td class="group-name added-food-name">
+          <span>↳ ${food.name} <span class="added-food-detail">${food.portion} ${weightText}</span></span>
+          <button type="button" class="btn-delete-row" onclick="this.closest('tr').remove(); calculateTotals();" title="ลบ">✖ ลบ</button>
+        </td>
+        <td class="col-qty-cell">
+          <input type="number" class="input-exchange" min="0" step="0.25" value="${qty}" oninput="calculateTotals()">
+        </td>
+        <td class="macro-muted">${c}</td><td class="macro-muted">${p}</td><td class="macro-muted">${f}</td><td class="macro-muted">${k}</td>
+      `;
+
+      parentRow.insertAdjacentElement('afterend', newRow);
+      calculateTotals();
+    }
+
+    // ฟังก์ชันเครื่องคิดเลข
+    function toggleCalc() {
+      const calc = document.getElementById('miniCalc');
+      calc.style.display = (calc.style.display === 'none' || calc.style.display === '') ? 'block' : 'none';
+    }
+    function pressCalc(v) { document.getElementById('calcDisplay').value += v; }
+    function clearCalc() { document.getElementById('calcDisplay').value = ''; }
+    function backspaceCalc() {
+      let d = document.getElementById('calcDisplay').value;
+      document.getElementById('calcDisplay').value = d.slice(0, -1);
+    }
+    function percentCalc() {
+      let d = document.getElementById('calcDisplay').value;
+      if (d !== '') {
+        try {
+          document.getElementById('calcDisplay').value = String(Function('"use strict";return (' + d + ')')() / 100);
+        } catch (e) {
+          document.getElementById('calcDisplay').value = 'Error';
+        }
+      }
+    }
+    function solveCalc() {
+      try {
+        document.getElementById('calcDisplay').value = Function('"use strict";return (' + document.getElementById('calcDisplay').value + ')')();
+      } catch (e) {
+        document.getElementById('calcDisplay').value = 'Error';
+      }
+    }
+
+    // ฟังก์ชันอัปเดตเป้าหมายเมื่อกรอกตัวเลข
+    function updateTargetFromKcal() {
+      updateTargetFromPct('Carb', 4);
+      if (!document.getElementById('inpProPct').disabled) {
+        updateTargetFromPct('Pro', 4);
+      } else {
+        updateTargetFromGram('Pro', 4);
+      }
+      updateTargetFromPct('Fat', 9);
+      calculateTotals();
+      checkTargetPercentage();
+    }
+
+    function updateTargetFromPct(macro, factor) {
+      const kcal = parseFloat(document.getElementById('inpKcal').value) || 0;
+      const pct = parseFloat(document.getElementById(`inp${macro}Pct`).value) || 0;
+      const gramInput = document.getElementById(`inp${macro}`);
+      
+      if (kcal > 0 && pct > 0) {
+        gramInput.value = Math.round((kcal * pct / 100) / factor);
+      } else if (pct === 0) {
+        gramInput.value = '';
+      }
+      calculateTotals();
+      checkTargetPercentage();
+    }
+
+    function updateTargetFromGram(macro, factor) {
+      const kcal = parseFloat(document.getElementById('inpKcal').value) || 0;
+      const grams = parseFloat(document.getElementById(`inp${macro}`).value) || 0;
+      const pctInput = document.getElementById(`inp${macro}Pct`);
+
+      if (kcal > 0 && grams > 0) {
+        pctInput.value = ((grams * factor / kcal) * 100).toFixed(1);
+      } else if (grams === 0) {
+        pctInput.value = '';
+      }
+      calculateTotals();
+      checkTargetPercentage();
+    }
+
+    // ฟังก์ชันตรวจสอบผลรวมเปอร์เซ็นต์
+    function checkTargetPercentage() {
+      const c = parseFloat(document.getElementById('inpCarbPct').value) || 0;
+      const p = parseFloat(document.getElementById('inpProPct').value) || 0;
+      const f = parseFloat(document.getElementById('inpFatPct').value) || 0;
+      const total = c + p + f;
+      const isProLocked = document.getElementById('inpProPct').disabled;
+
+      const warningEl = document.getElementById('macroTargetWarning');
+      if (!isProLocked && total > 0 && Math.abs(total - 100) > 0.5) { // ปิดการแจ้งเตือนหากโปรตีนถูกล็อกเป็นกรัม
+        warningEl.style.display = 'block';
+        document.getElementById('totalMacroPctShow').innerText = (total % 1 === 0) ? total : total.toFixed(1);
+      } else {
+        warningEl.style.display = 'none';
+      }
+    }
+
+    function calculateTotals() {
+      let totalCarb = 0;
+      let totalPro = 0;
+      let totalFat = 0;
+      let totalKcal = 0;
+
+      const rows = document.querySelectorAll('#exchangeTable tbody tr');
+
+      rows.forEach(row => {
+        const input = row.querySelector('.input-exchange');
+        if (!input) return; // ป้องกันข้อผิดพลาดกรณีไม่มีช่องกรอก
+        const portions = parseFloat(input.value) || 0;
+
+        if(portions > 0) {
+          const c = parseFloat(row.getAttribute('data-c')) || 0;
+          const p = parseFloat(row.getAttribute('data-p')) || 0;
+          const f = parseFloat(row.getAttribute('data-f')) || 0;
+          const k = parseFloat(row.getAttribute('data-k')) || 0;
+
+          totalCarb += c * portions;
+          totalPro += p * portions;
+          totalFat += f * portions;
+          totalKcal += k * portions;
+        }
+      });
+
+      // 1. อัปเดตตัวเลขผลรวมปัจจุบัน (Actual)
+      document.getElementById('sumCarb').innerText = totalCarb.toFixed(1);
+      document.getElementById('sumPro').innerText = totalPro.toFixed(1);
+      document.getElementById('sumFat').innerText = totalFat.toFixed(1);
+      document.getElementById('sumKcal').innerText = totalKcal.toFixed(0);
+
+      // 2. คำนวณเปอร์เซ็นต์ Macro (% Distribution)
+      let pctC = totalKcal > 0 ? ((totalCarb * 4) / totalKcal) * 100 : 0;
+      let pctP = totalKcal > 0 ? ((totalPro * 4) / totalKcal) * 100 : 0;
+      let pctF = totalKcal > 0 ? ((totalFat * 9) / totalKcal) * 100 : 0;
+      document.getElementById('pctCarb').innerText = `(${pctC.toFixed(1)}%)`;
+      document.getElementById('pctPro').innerText = `(${pctP.toFixed(1)}%)`;
+      document.getElementById('pctFat').innerText = `(${pctF.toFixed(1)}%)`;
+
+      // 3. คำนวณส่วนต่าง ขาด/เกิน (Diff vs Target)
+      updateDiff('inpKcal', 'diffKcal', totalKcal, 50);  // พลังงานยอมรับส่วนต่างได้ +/- 50 kcal
+      updateDiff('inpCarb', 'diffCarb', totalCarb, 5);   // สารอาหารยอมรับส่วนต่างได้ +/- 5 g
+      updateDiff('inpPro', 'diffPro', totalPro, 5);
+      updateDiff('inpFat', 'diffFat', totalFat, 5);
+    }
+
+    function updateDiff(inputId, diffId, currentVal, tolerance) {
+      const target = parseFloat(document.getElementById(inputId).value) || 0;
+      const diffEl = document.getElementById(diffId);
+      
+      if (target > 0) {
+        const diff = currentVal - target;
+        let diffText = '';
+        if (diff > 0) {
+          diffText = `เกิน: +${diff.toFixed(1)}`;
+        } else if (diff < 0) {
+          diffText = `ขาด: ${diff.toFixed(1)}`;
+        } else {
+          diffText = `พอดี: 0.0`;
+        }
+        diffEl.innerText = diffText;
+        diffEl.className = 'dash-diff'; // ล้างคลาสเดิม
+        if (Math.abs(diff) <= tolerance) {
+          diffEl.classList.add('good'); // เขียว
+        } else if (diff > tolerance) {
+          diffEl.classList.add('over'); // แดง
+        } else {
+          diffEl.classList.add('under'); // ส้ม/เหลือง
+        }
+      } else {
+        diffEl.innerText = '-';
+        diffEl.className = 'dash-diff';
+      }
+    }
+
+    function resetTable() {
+      // 1. ล้างตารางและลบแถวที่เพิ่มมา
+      const inputs = document.querySelectorAll('.input-exchange');
+      inputs.forEach(input => input.value = '');
+      document.querySelectorAll('.added-food-row').forEach(row => row.remove());
+      
+      // 2. ล้างช่องบันทึก
+      document.getElementById('memoNote').value = '';
+      
+      // 3. ล้างช่องเป้าหมาย (Kcal, %, g) และปลดล็อกช่องโปรตีน
+      const targetInputs = document.querySelectorAll('.target-input, .target-pct-input');
+      targetInputs.forEach(input => {
+        input.value = '';
+        input.disabled = false; // ปลดล็อก
+        input.style.backgroundColor = ''; // คืนสีพื้นหลัง
+      });
+      
+      // 4. ซ่อนคำเตือนเปอร์เซ็นต์เป้าหมาย
+      document.getElementById('macroTargetWarning').style.display = 'none';
+
+      calculateTotals();
+      checkTargetPercentage();
+      
+      // เลื่อนหน้าจอขึ้นบนสุด
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('load') === 'true') {
+        const targetTEE = localStorage.getItem('targetTEE');
+        const targetCarbPct = localStorage.getItem('targetCarbPct');
+        const targetFatPct = localStorage.getItem('targetFatPct');
+        const targetPro = localStorage.getItem('targetPro');
+        const targetProMethod = localStorage.getItem('targetProMethod');
+        const targetProPct = localStorage.getItem('targetProPct');
+
+        if (targetTEE && targetTEE > 0) document.getElementById('inpKcal').value = Math.round(targetTEE);
+        if (targetCarbPct && targetCarbPct > 0) {
+          document.getElementById('inpCarbPct').value = parseFloat(targetCarbPct);
+          updateTargetFromPct('Carb', 4);
+        }
+        if (targetFatPct && targetFatPct > 0) {
+          document.getElementById('inpFatPct').value = parseFloat(targetFatPct);
+          updateTargetFromPct('Fat', 9);
+        }
+        
+        if (targetProMethod === 'percent' && targetProPct && targetProPct > 0) {
+          document.getElementById('inpProPct').value = parseFloat(targetProPct);
+          updateTargetFromPct('Pro', 4);
+          document.getElementById('inpProPct').disabled = false;
+          document.getElementById('inpProPct').style.backgroundColor = '';
+        } else if (targetPro && targetPro > 0) {
+          document.getElementById('inpPro').value = Math.round(targetPro);
+          document.getElementById('inpProPct').disabled = true;
+          document.getElementById('inpProPct').style.backgroundColor = '#f0f0f0';
+          updateTargetFromGram('Pro', 4);
+        }
+      }
+
+      calculateTotals(); // คำนวณครั้งแรกเมื่อเปิดหน้า
+      checkTargetPercentage(); // ตรวจสอบเปอร์เซ็นต์เริ่มต้น
+
+      // ==========================================
+      // 4. JavaScript Logic การค้นหา (Search Feature)
+      // ==========================================
+      // บังคับดึงข้อมูลช่องค้นหาจากไฟล์ food-database.js โดยตรงเสมอ
+      let activeFoodDB = (typeof foodDatabase !== 'undefined' && Array.isArray(foodDatabase)) ? foodDatabase.flat(Infinity) : [];
+      
+      const searchInput = document.getElementById('foodSearchInput');
+      const searchResults = document.getElementById('searchResults');
+
+      if(searchInput && searchResults) {
+        
+        function doSearch() {
+          try {
+            const rawInput = searchInput.value.trim(); 
+            const inputText = rawInput.toLowerCase();
+            
+            if (inputText === '') {
+              searchResults.style.display = 'none';
+              searchResults.innerHTML = '';
+              return;
+            }
+
+            const searchKeywords = inputText.split(' ').filter(kw => kw.trim() !== '');
+
+            // ค้นหาในเมนูอาหาร
+            const filteredMenus = menuDatabase.filter(menu => {
+              const searchableText = `${menu.menuName} เมนูอาหาร`.toLowerCase();
+              const textWithoutSpace = searchableText.replace(/\s+/g, '');
+              return searchKeywords.length === 0 || searchKeywords.every(kw => searchableText.includes(kw) || textWithoutSpace.includes(kw));
+            });
+
+            const filteredFoods = activeFoodDB.filter(food => {
+              if (!food || typeof food !== 'object') return false; 
+              const name = food.name ? food.name.toString().toLowerCase() : '';
+              const cat = food.category ? food.category.toString() : '';
+              const catLower = cat.toLowerCase();
+
+              const searchableText = `${name} ${catLower}`;
+              const textWithoutSpace = searchableText.replace(/\s+/g, ''); 
+              
+              return searchKeywords.length === 0 || searchKeywords.every(kw => searchableText.includes(kw) || textWithoutSpace.includes(kw));
+            });
+            searchResults.innerHTML = '';
+
+            let hasResult = false;
+
+            // แสดงผลลัพธ์เมนูอาหาร
+            if (filteredMenus.length > 0) {
+              hasResult = true;
+              filteredMenus.forEach(menu => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'search-result-item';
+                itemDiv.innerHTML = `<div><span class="search-result-name">🍲 ${menu.menuName}</span><span class="search-result-cat" style="background-color: var(--orange);">เมนูอาหารสำเร็จรูป</span></div><span class="search-result-portion">คลิกเพื่อดูและเพิ่มวัตถุดิบ</span>`;
+                itemDiv.addEventListener('click', () => { 
+                  openAddMenuModal(menu); 
+                  searchInput.value = ''; 
+                  searchResults.style.display = 'none'; 
+                });
+                searchResults.appendChild(itemDiv);
+              });
+            }
+
+            if (filteredFoods.length > 0) {
+              hasResult = true;
+              filteredFoods.forEach(food => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'search-result-item';
+                const weightText = (food.weight && food.weight !== '-' && food.weight !== '0') ? ` (${food.weight} กรัม)` : '';
+                
+                let bgColor = food.tagColor;
+                if (!bgColor) {
+                  const c = food.category ? food.category.toString() : '';
+                  if (c.includes('นม')) bgColor = '#3498db';
+                  else if (c.includes('ผัก')) bgColor = '#2ecc71';
+                  else if (c.includes('ผลไม้')) bgColor = '#f39c12';
+                  else if (c.includes('ข้าว') || c.includes('แป้ง')) bgColor = '#c88a4a';
+                  else if (c.includes('เนื้อสัตว์')) bgColor = '#e74c3c';
+                  else if (c.includes('ไขมัน')) bgColor = '#f1c40f';
+                  else if (c.includes('น้ำตาล')) bgColor = '#bdc3c7';
+                  else bgColor = '#95a5a6';
+                }
+
+                itemDiv.innerHTML = `<div><span class="search-result-name">${food.name}</span><span class="search-result-cat" style="background-color: ${bgColor};">${food.category}</span></div><span class="search-result-portion">ปริมาณ 1 ส่วน: ${food.portion}${weightText}</span>`;
+                itemDiv.addEventListener('click', () => { 
+                  openAddFoodModal(food); 
+                  searchInput.value = ''; 
+                  searchResults.style.display = 'none'; 
+                });
+                searchResults.appendChild(itemDiv);
+              });
+            } 
+            
+            if (!hasResult) {
+              searchResults.innerHTML = `
+                <div class="search-empty" style="padding: 20px 15px;">
+                  <div style="margin-bottom: 12px; color: #e74c3c; font-size: 15px; font-weight: bold;">ไม่พบข้อมูลของ "${rawInput}"</div>
+                  <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button type="button" id="createTempMenuBtn" style="padding: 10px 18px; background-color: var(--orange); color: white; border: none; border-radius: 8px; cursor: pointer; font-family: 'Sarabun', sans-serif; font-size: 14px; font-weight: bold; transition: 0.3s; box-shadow: 0 4px 10px rgba(255, 127, 0, 0.2); width: 100%;">
+                      🛠️ สร้างเมนูนี้ใช้เอง
+                    </button>
+                  </div>
+                </div>
+              `;
+              
+              const createBtn = document.getElementById('createTempMenuBtn');
+              if (createBtn) {
+                createBtn.addEventListener('click', () => {
+                  openAddMenuModal({ menuName: rawInput, ingredients: [] });
+                  searchInput.value = '';
+                  searchResults.style.display = 'none';
+                });
+              }
+      } // ✅ ปิด else
+
+      searchResults.style.display = 'block';
+
+    } catch (err) {
+      console.error("Search System Error:", err);
+    }
+      }
+
+      searchInput.addEventListener('focus', function() {
+        if (this.value.trim() !== '') doSearch();
+      });
+
+      searchInput.addEventListener('input', doSearch);
+
+        // ปิดกล่อง Dropdown อัตโนมัติ เมื่อคลิกพื้นที่อื่นนอกกล่องค้นหา
+        document.addEventListener('click', function(e) { 
+          if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) { 
+            searchResults.style.display = 'none'; 
+          } 
+        });
+      }
+    });
+  </script>
+</body>
+</html>

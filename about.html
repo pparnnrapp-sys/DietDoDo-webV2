@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DietDoDo - เกี่ยวกับเรา</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;800&family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.9.10/dist/dotlottie-wc.js" type="module"></script>
+  <style>
+    :root {
+      --bg-color: #dcecc9; 
+      --bg-color-light: #f4f9ec; 
+      --cloud-color: #fdfbf5;
+      --text-dark: #2c3e50;
+      --text-grey: #7f8c8d;
+      --orange: #f27d16;
+      --green: #86c140;
+      --red: #ff6b6b; /* สีแดงละมุน */
+      --yellow: #f1c40f; /* สีเหลือง */
+    }
+    
+    body { 
+      margin: 0; 
+      padding: 0; 
+      background: var(--bg-color-light);
+      background: radial-gradient(circle at 80% 50%, var(--bg-color-light) 0%, var(--bg-color) 100%);
+      background-attachment: fixed;
+      font-family: 'Sarabun', sans-serif;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* แอนิเมชันสำหรับโลโก้ */
+    @keyframes bounce-dot {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+    }
+    .anim-bounce-dot { animation: bounce-dot 1s ease-in-out 3; }
+    @keyframes tree-sway {
+      0%, 100% { transform: rotate(-4deg); }
+      50% { transform: rotate(4deg); }
+    }
+    .anim-tree { animation: tree-sway 1.5s ease-in-out infinite; transform-origin: 30px 25px; }
+
+    /* Header */
+    header { position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 8px 40px; font-family: 'Poppins', sans-serif; background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.6); }
+    .logo-container { width: 180px; max-width: 100%; display: block; transition: transform 0.3s ease, filter 0.3s ease; }
+    .logo-container:hover { transform: translateY(-2px) scale(1.02); filter: drop-shadow(0 5px 15px rgba(255, 255, 255, 0.6)) brightness(1.1); }
+    nav.menu-links { display: flex; gap: 40px; }
+    nav.menu-links a { text-decoration: none; color: var(--text-grey); font-weight: 700; font-size: 18px; letter-spacing: 1.5px; transition: 0.3s; border-bottom: 3px solid transparent; padding-bottom: 5px; }
+    nav.menu-links a:hover, nav.menu-links a.active { color: var(--text-dark); transform: translateY(-2px); border-bottom: 3px solid var(--orange); }
+
+    /* ส่วนของเนื้อหา About */
+    .page-title {
+      text-align: center;
+      font-family: 'Poppins', sans-serif;
+      font-size: 48px;
+      font-weight: 800;
+      color: var(--text-dark);
+      margin: 5px 0 25px 0;
+      position: relative;
+      z-index: 10;
+    }
+
+    .about-wrapper {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 20px 60px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .about-content {
+      background: #fff;
+      border-radius: 24px;
+      padding: 50px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+
+    .about-content h2 {
+      font-size: 32px;
+      color: var(--green);
+      margin: 0 0 20px 0;
+    }
+
+    .about-content p {
+      font-size: 18px;
+      color: var(--text-grey);
+      line-height: 1.8;
+      margin: 0;
+      margin-bottom: 20px;
+    }
+
+    .about-features {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 40px;
+    }
+
+    .feature-card {
+      background: linear-gradient(135deg, rgba(134, 193, 64, 0.1), rgba(221, 242, 181, 0.3));
+      padding: 30px 20px;
+      border-radius: 16px;
+    }
+
+    .feature-card .icon {
+      font-size: 40px;
+      margin-bottom: 15px;
+    }
+
+    .feature-card h3 {
+      margin: 0 0 10px 0;
+      color: var(--text-dark);
+      font-size: 20px;
+    }
+
+    .feature-card p {
+      font-size: 15px;
+      margin: 0;
+    }
+
+    /* จัดกึ่งกลางแอนิเมชันในหน้า About */
+    .about-illustration {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+      margin-top: -10px;
+      margin-bottom: 25px;
+    }
+    .illustration-divider {
+      width: 3px;
+      height: 90px;
+      background: #e0e0e0;
+      border-radius: 2px;
+    }
+
+    /* สไตล์สำหรับปุ่มติดต่อเรา */
+    .contact-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 25px;
+      border-radius: 30px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 16px;
+      color: #fff !important;
+      transition: all 0.3s ease;
+    }
+    .contact-btn.ig { background: var(--orange); box-shadow: 0 4px 15px rgba(255, 127, 0, 0.3); }
+    .contact-btn.ig:hover { background: #e67300; transform: translateY(-3px); box-shadow: 0 6px 20px rgba(255, 127, 0, 0.4); }
+    .contact-btn.email { background: var(--green); box-shadow: 0 4px 15px rgba(134, 193, 64, 0.3); }
+    .contact-btn.email:hover { background: #75a835; transform: translateY(-3px); box-shadow: 0 6px 20px rgba(134, 193, 64, 0.4); }
+
+    @media (max-width: 768px) {
+      header { flex-direction: column; gap: 10px; padding: 10px; }
+      .logo-container { width: 140px; }
+      .page-title { font-size: 36px; margin: 10px 0 30px 0; }
+      nav.menu-links { flex-wrap: wrap; justify-content: center; gap: 15px; }
+      nav.menu-links a { font-size: 15px; }
+      .about-content { padding: 25px 15px; }
+      .about-content h2 { font-size: 26px; }
+      .about-content p { font-size: 16px; }
+      .about-features { grid-template-columns: 1fr; }
+      .about-illustration { flex-direction: column; gap: 20px; }
+      .illustration-divider { width: 90px; height: 3px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="logo-container" aria-label="DietDoDo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 150" width="100%" height="auto">
+        <defs>
+          <style>
+            .font-main { font-family: 'Nunito', 'Segoe UI', Tahoma, sans-serif; font-weight: 900; font-size: 100px; fill: #0b0b0b; }
+            .color-green { fill: #86C140; }
+            .color-orange { fill: #F7931E; }
+          </style>
+        </defs>
+        <text x="20" y="115" class="font-main">D</text>
+        <rect x="110" y="55" width="22" height="60" rx="11" class="color-orange" />
+        <circle cx="121" cy="30" r="12" class="color-green anim-bounce-dot" />
+        <text x="145" y="115" class="font-main">e</text>
+        <text x="210" y="115" class="font-main">t</text>
+        <text x="275" y="115" class="font-main">D</text>
+        <g transform="translate(365, 30)">
+          <path class="anim-tree" d="M 5,25 C 2,15 15,5 30,20 C 35,15 50,5 55,25" fill="none" stroke="#86C140" stroke-width="8" stroke-linecap="round"/>
+          <circle cx="15" cy="45" r="7" class="color-green" />
+          <circle cx="45" cy="45" r="7" class="color-green" />
+          <path d="M 5,60 A 25 20 0 0 0 55,60" fill="none" stroke="#0b0b0b" stroke-width="12" stroke-linecap="round"/>
+        </g>
+        <text x="440" y="115" class="font-main">D</text>
+        <g transform="translate(550, 80)">
+          <circle cx="0" cy="8" r="22" fill="none" stroke="#0b0b0b" stroke-width="16" />
+        </g>
+      </svg>
+    </a>
+    <nav class="menu-links">
+      <a href="index.html">HOME</a>
+      <a href="menu.html">MENU</a>
+      <a href="about.html" class="active">ABOUT</a>
+    </nav>
+  </header>
+
+  <h1 class="page-title">ABOUT US</h1>
+
+  <div class="about-wrapper">
+    <div class="about-content">
+      <div class="about-illustration">
+        <!-- ตัวการ์ตูนอะโวคาโด ลดขนาดลง -->
+        <dotlottie-wc src="https://lottie.host/0d8be223-4867-4dc1-b1e1-de57d01cfa23/bSh6SF7Scp.lottie" style="width: 150px; height: 150px;" autoplay loop></dotlottie-wc>
+        
+        <!-- ขีดคั่นกลาง -->
+        <div class="illustration-divider"></div>
+        
+        <!-- โลโก้ DietDoDo -->
+        <div style="width: 160px;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 150" width="100%" height="auto">
+            <text x="20" y="115" class="font-main">D</text>
+            <rect x="110" y="55" width="22" height="60" rx="11" class="color-orange" />
+            <circle cx="121" cy="30" r="12" class="color-green anim-bounce-dot" />
+            <text x="145" y="115" class="font-main">e</text>
+            <text x="210" y="115" class="font-main">t</text>
+            <text x="275" y="115" class="font-main">D</text>
+            <g transform="translate(365, 30)">
+              <path class="anim-tree" d="M 5,25 C 2,15 15,5 30,20 C 35,15 50,5 55,25" fill="none" stroke="#86C140" stroke-width="8" stroke-linecap="round"/>
+              <circle cx="15" cy="45" r="7" class="color-green" />
+              <circle cx="45" cy="45" r="7" class="color-green" />
+              <path d="M 5,60 A 25 20 0 0 0 55,60" fill="none" stroke="#0b0b0b" stroke-width="12" stroke-linecap="round"/>
+            </g>
+            <text x="440" y="115" class="font-main">D</text>
+            <g transform="translate(550, 80)">
+              <circle cx="0" cy="8" r="22" fill="none" stroke="#0b0b0b" stroke-width="16" />
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- ส่วนติดต่อเราและประกาศทางกฎหมาย -->
+      <div style="margin-top: 20px; text-align: left;">
+        <h3 style="color: var(--orange); font-size: 24px; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">📞 เกี่ยวกับเรา & ติดต่อเรา (About Us & Contact)</h3>
+        <p style="font-size: 16px; color: var(--text-grey); line-height: 1.8; margin-bottom: 15px;">หากท่านพบปัญหาขัดข้องในการใช้งาน มีข้อสงสัย หรือต้องการความช่วยเหลือเพิ่มเติม สามารถติดต่อเราได้โดยตรง ทางเรายินดีให้บริการและจะรีบดำเนินการแก้ไขปัญหาให้ท่านโดยเร็วที่สุด:</p>
+        
+        <div style="display: flex; gap: 15px; margin-bottom: 40px; flex-wrap: wrap;">
+          <a href="https://www.instagram.com/pattraparnn?igsh=Z2RscjZsNXRubXoy" target="_blank" class="contact-btn ig">
+            📸 ติดต่อผ่าน Instagram
+          </a>
+          <a href="https://mail.google.com/mail/?view=cm&fs=1&to=pattrapron.pp@gmail.com" target="_blank" class="contact-btn email">
+            📧 ส่งอีเมลหาเรา
+          </a>
+        </div>
+
+        <div style="background: #fff5f5; border-left: 5px solid var(--red); padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(255, 107, 107, 0.1);">
+          <h3 style="color: var(--red); font-size: 20px; margin-top: 0; margin-bottom: 15px;">⚠️ ประกาศสำคัญ: ข้อห้ามในการส่งต่อเนื้อหาและผลทางกฎหมายขั้นเด็ดขาด</h3>
+          <p style="font-size: 15px; color: var(--text-dark); line-height: 1.6; margin-bottom: 15px;">ข้อมูล เนื้อหา ไฟล์ เอกสาร หรือสื่อทั้งหมดที่คุณได้รับจาก <strong>DietDoDo</strong> เป็นทรัพย์สินทางปัญญา และให้สิทธิ์การใช้งานเฉพาะบุคคล (Personal License) สำหรับผู้ที่ได้รับอนุญาตโดยตรงเท่านั้น</p>
+          
+          <p style="font-size: 16px; color: var(--red); font-weight: bold; line-height: 1.6; margin-bottom: 15px; background: #ffeaea; padding: 10px 15px; border-radius: 8px;">
+            ❌ ห้ามมิให้ผู้ใด "ส่งต่อ" (Forward), แชร์, ดัดแปลง หรือนำเนื้อหาไปแจกจ่ายให้แก่บุคคลที่สามโดยเด็ดขาด ไม่ว่าจะเพื่อการค้าหรือไม่ก็ตาม
+          </p>
+          
+          <p style="font-size: 15px; color: var(--text-dark); line-height: 1.6; margin-bottom: 10px;">การส่งต่อข้อมูลให้กับบุคคลอื่น ถือเป็นการละเมิดทรัพย์สินทางปัญญา ทางเรามีมาตรการตรวจสอบและพร้อมดำเนินคดีทางกฎหมายอย่างถึงที่สุด โดยไม่มีการยอมความใดๆ ทั้งสิ้น ตามบทบัญญัติดังต่อไปนี้:</p>
+          
+          <ul style="font-size: 14px; color: var(--text-grey); line-height: 1.7; padding-left: 20px; margin-bottom: 20px;">
+            <li style="margin-bottom: 8px;"><strong>ความผิดฐานทำซ้ำและเผยแพร่:</strong> ตาม <strong>พระราชบัญญัติลิขสิทธิ์ พ.ศ. 2537 มาตรา 27 ประกอบมาตรา 69</strong> การส่งต่อไฟล์หรือข้อมูลให้ผู้อื่นโดยไม่ได้รับอนุญาต มีโทษปรับตั้งแต่ 20,000 ถึง 200,000 บาท</li>
+            <li style="margin-bottom: 8px;"><strong>กรณีส่งต่อเพื่อการค้า (แสวงหาผลกำไร):</strong> หากนำไปหารค่าใช้จ่าย หรือนำไปขายต่อ มีโทษจำคุกตั้งแต่ 6 เดือน ถึง 4 ปี หรือปรับตั้งแต่ 100,000 ถึง 800,000 บาท หรือทั้งจำทั้งปรับ</li>
+            <li style="margin-bottom: 8px;"><strong>การเรียกร้องค่าเสียหายทางแพ่ง:</strong> นอกเหนือจากโทษทางอาญา ทางเราจะทำการฟ้องร้องเรียกค่าสินไหมทดแทนจากทั้ง <strong>"ผู้ส่งต่อ"</strong> และ <strong>"ผู้รับข้อมูล"</strong> ตามมูลค่าความเสียหายที่เกิดขึ้นจริงสูงสุด</li>
+            <li><strong>การตรวจสอบย้อนกลับ:</strong> ระบบมีการบันทึกข้อมูลประวัติการเข้าถึง (Digital Footprint) หากพบว่ามีข้อมูลหลุดรอดออกไป ทางเราสามารถตรวจสอบย้อนกลับไปยังบัญชีต้นทางที่ทำการส่งต่อได้ทันที</li>
+          </ul>
+          
+          <p style="font-size: 15px; color: var(--text-dark); font-weight: bold; margin-bottom: 0; text-align: center; border-top: 1px dashed #ffcccc; padding-top: 15px;">การเข้าถึงหรือใช้งานเนื้อหานี้ ถือว่าท่านได้รับทราบ ยอมรับ และยินยอมปฏิบัติตามเงื่อนไขทางกฎหมายทั้งหมดที่ระบุไว้ข้างต้นอย่างเคร่งครัด</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
