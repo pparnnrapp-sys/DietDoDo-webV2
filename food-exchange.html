@@ -514,9 +514,9 @@
             <input type="text" id="modalFoodSearchInput" class="input-search" placeholder="พิมพ์ชื่ออาหาร..." style="font-size: 14px; padding: 8px 12px;" oninput="doModalSearch()" onfocus="doModalSearch()">
             <div id="modalFoodSearchResults" class="search-results-dropdown" style="max-height: 150px; font-size: 14px; z-index: 2001;"></div>
           </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 8px; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px solid #eee;">
-            <div style="font-size: 12px; color: var(--text-grey); font-weight: bold; grid-column: span 5; margin-bottom: -4px;">กรณีไม่พบอาหารในระบบ: กำหนดสารอาหารเอง (ต่อ 1 ส่วน)</div>
-            <input type="text" id="modalCustomName" class="input-search" placeholder="พิมพ์ชื่อวัตถุดิบที่ต้องการ..." style="font-size: 13px; padding: 6px; grid-column: span 5;">
+        <div class="custom-macro-grid">
+          <div class="custom-macro-title">กรณีไม่พบอาหารในระบบ: กำหนดสารอาหารเอง (ต่อ 1 ส่วน)</div>
+          <input type="text" id="modalCustomName" class="input-search custom-macro-name" placeholder="พิมพ์ชื่อวัตถุดิบที่ต้องการ..." style="font-size: 13px; padding: 6px;">
             <input type="number" id="modalCustomCarb" class="input-search" placeholder="Carb (g)" style="font-size: 13px; padding: 6px;" min="0" oninput="calculateCustomKcal()">
             <input type="number" id="modalCustomPro" class="input-search" placeholder="Pro (g)" style="font-size: 13px; padding: 6px;" min="0" oninput="calculateCustomKcal()">
             <input type="number" id="modalCustomFat" class="input-search" placeholder="Fat (g)" style="font-size: 13px; padding: 6px;" min="0" oninput="calculateCustomKcal()">
